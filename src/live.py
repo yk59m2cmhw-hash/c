@@ -146,7 +146,9 @@ def as_text(f: dict) -> str:
         f"A warning is given when the forecast is above {f['warning_threshold']:.0f} µg/m³.",
         "**Why:**\n" + "\n".join(f"- {line}" for line in f["why"]),
         "*This forecast cannot be checked against the reference monitor, whose public record ends on 14 Nov 2025. "
-        "On 398 test days in 2024-25 the same kind of model missed 19 of 119 smog days and raised 40 false alarms. Prototype, not an official warning.*",
+        "On 398 test days in 2024-25 the same kind of model missed 19 of 119 smog days and raised 40 false alarms. "
+        "The number is the level expected at the former reference monitor, not at your school: in 2026 the model's numbers ran well above "
+        "a low-cost citizen sensor in the city centre. Prototype, not an official warning.*",
     ])
 
 

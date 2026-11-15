@@ -99,3 +99,16 @@ The public record of the reference monitor ends on 14 Nov 2025, so today neither
 | pm_evening   |                  0.61 |
 | pm_week      |                  0.37 |
 | wind_u       |                  0.27 |
+
+## External check on two citizen sensors, 2026 (added on 15 Nov 2026)
+
+A different instrument (low-cost SDS011 optical sensors from sensor.community), in different places in Almaty, in a year no model has seen. The models are frozen: trained on the reference monitor (2020-04 .. 2025-11), with the thresholds above. Nothing was fitted or tuned on this data, and the plan for this check was written in PROJECT_SPEC.md before the data was looked at. 'Measured' here means the citizen sensor's own next-day daytime mean, which is not reference-grade: these sensors read too high in humid air and are not calibrated against the reference monitor. Read the rank correlation (do the forecast and the sensor order the days the same way; 1 is perfect) before the MAE.
+
+### Sensor 78340 (city centre): 2026-01-12 .. 2026-11-08, 80 days (80 in the heating season), 9 days above 35 µg/m³ by this sensor
+
+| Method | Rank correlation | MAE, µg/m³ | Bias, µg/m³ | Smog days caught | Missed | False alarms |
+|---|---|---|---|---|---|---|
+| That sensor's own 'tomorrow = today' | 0.56 | 9.4 | +0.1 | 5 / 9 | 4 | 23 |
+| Global model (CAMS) | 0.62 | 10.2 | +6.0 | 9 / 9 | 0 | 54 |
+| Our main model, fed with that sensor's readings | 0.47 | 17.1 | +15.9 | 9 / 9 | 0 | 40 |
+| Our sensor-free model (no PM2.5 input) | 0.41 | 28.4 | +27.7 | 9 / 9 | 0 | 43 |

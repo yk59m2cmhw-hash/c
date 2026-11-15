@@ -565,7 +565,82 @@
     "band_mean_width": 34.93575692684882,
     "sensor_free_band_10_90_coverage": 0.7512562814070352
   },
-  "citizen_2026": null,
+  "citizen_2026": {
+    "78340": {
+      "place": "city centre",
+      "n_days": 80,
+      "first_day": "2026-01-12",
+      "last_day": "2026-11-08",
+      "bad_days": 9,
+      "heating_season_days": 80,
+      "methods": {
+        "persistence": {
+          "n": 80,
+          "mae": 9.378309722222223,
+          "bias": 0.0826652777777774,
+          "rank_correlation": 0.5596577590248477,
+          "alerts": {
+            "threshold": 23.0,
+            "bad_days": 9,
+            "caught": 5,
+            "missed": 4,
+            "false_alarms": 23,
+            "correct_quiet": 48,
+            "recall": 0.5555555555555556,
+            "precision": 0.17857142857142858
+          }
+        },
+        "cams": {
+          "n": 80,
+          "mae": 10.24151626984127,
+          "bias": 5.970091269841269,
+          "rank_correlation": 0.6153070792311298,
+          "alerts": {
+            "threshold": 18.5,
+            "bad_days": 9,
+            "caught": 9,
+            "missed": 0,
+            "false_alarms": 54,
+            "correct_quiet": 17,
+            "recall": 1.0,
+            "precision": 0.14285714285714285
+          }
+        },
+        "model": {
+          "n": 80,
+          "mae": 17.102156351658728,
+          "bias": 15.898321067436848,
+          "rank_correlation": 0.4695968120018753,
+          "alerts": {
+            "threshold": 29.0,
+            "bad_days": 9,
+            "caught": 9,
+            "missed": 0,
+            "false_alarms": 40,
+            "correct_quiet": 31,
+            "recall": 1.0,
+            "precision": 0.1836734693877551
+          }
+        },
+        "sensor_free": {
+          "n": 80,
+          "mae": 28.447585854251038,
+          "bias": 27.727764939448956,
+          "rank_correlation": 0.4135958743553681,
+          "alerts": {
+            "threshold": 36.0,
+            "bad_days": 9,
+            "caught": 9,
+            "missed": 0,
+            "false_alarms": 43,
+            "correct_quiet": 28,
+            "recall": 1.0,
+            "precision": 0.17307692307692307
+          }
+        }
+      }
+    }
+  },
   "feature_importance_test": {
     "season_cos": 1.939,
     "pm_24h": 1.011,

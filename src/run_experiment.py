@@ -17,6 +17,7 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
+import matplotlib.dates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -200,6 +201,7 @@ def citizen_check(table: pd.DataFrame, metar: pd.DataFrame, cams: pd.Series, thr
             continue
         pred = predict_all(usable, rows)
         pred.round(2).to_csv(OUT / f"citizen_2026_sensor_{sensor_id}_predictions.csv", index=False)
+        fig_citizen(pred, sensor_id, place, OUT / f"fig_citizen_2026_sensor_{sensor_id}.png")
         daily[sensor_id] = t["pm_day"].dropna()
         entry = {"place": place, "n_days": int(len(pred)), "first_day": str(pred["target_day"].min().date()),
                  "last_day": str(pred["target_day"].max().date()), "bad_days": int((pred["y"] > aa.ALERT_LEVEL).sum()),
@@ -218,6 +220,35 @@ def citizen_check(table: pd.DataFrame, metar: pd.DataFrame, cams: pd.Series, thr
                                      "mean_centre": float(both["a"].mean()), "mean_west": float(both["b"].mean()),
                                      "same_side_of_35": float(((both["a"] > aa.ALERT_LEVEL) == (both["b"] > aa.ALERT_LEVEL)).mean())}
     return result or None
+
+
+def fig_citizen(pred: pd.DataFrame, sensor_id: int, place: str, path: Path) -> None:
+    """Frozen forecasts against one citizen sensor in 2026, one panel per stretch of days."""
+    pred = pred.sort_values("target_day")
+    gap = pred["target_day"].diff().dt.days.fillna(1) > 45           # a new panel after a long gap (the warm season)
+    groups = [g for _, g in pred.groupby(gap.cumsum())]
+    widths = [max(len(g), 12) for g in groups]
+    fig, axes = plt.subplots(1, len(groups), figsize=(11, 4.4), dpi=160, sharey=True, gridspec_kw={"width_ratios": widths}, squeeze=False)
+    for i, (ax, g) in enumerate(zip(axes[0], groups)):
+        ax.plot(g["target_day"], g["y"], color=INK, linewidth=2, label="Measured by the citizen sensor")
+        ax.plot(g["target_day"], g["sensor_free"], color=AQUA, linewidth=2, label="Sensor-free model (frozen)")
+        ax.plot(g["target_day"], g["model"], color=BLUE, linewidth=1.6, label="Main model, fed with the sensor's readings (frozen)")
+        ax.axhline(aa.ALERT_LEVEL, color=MUTED, linewidth=1, linestyle=(0, (4, 3)))
+        style(ax, "", "")
+        ax.set_ylim(bottom=0)
+        ax.xaxis.set_major_locator(matplotlib.dates.DayLocator(bymonthday=[1, 15]))
+        ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%d %b"))
+        if i == 0:
+            ax.set_ylabel("Daytime PM2.5, µg/m³", color=MUTED, fontsize=10)
+            ax.legend(loc="upper right", frameon=False, fontsize=9, labelcolor=INK)
+    axes[0][-1].text(1.01, aa.ALERT_LEVEL, "35 µg/m³", transform=axes[0][-1].get_yaxis_transform(), color=MUTED, fontsize=9, va="center")
+    fig.suptitle(f"External check, 2026: forecasts run well above citizen sensor {sensor_id} ({place})", x=0.01, ha="left",
+                 color=INK, fontsize=13, fontweight="bold")
+    fig.text(0.01, 0.9, "A different instrument, place and year. The models were trained on the reference monitor and not adjusted.",
+             color=MUTED, fontsize=10)
+    fig.tight_layout(rect=(0, 0, 0.97, 0.9))
+    fig.savefig(path)
+    plt.close(fig)
 
 
 # --------------------------------------------------------------------------- #
