@@ -86,3 +86,11 @@ The reported numbers use scikit-learn 1.9.1, pinned in `requirements.txt`. Other
 | `src/demo.py`, `app.py` | the demo page |
 | `notebooks/SmogTomorrow.ipynb` | the same steps as a notebook, outputs saved |
 | `PROJECT_SPEC.md` | the evaluation protocol, written before the test was scored |
+| `tests/test_no_leakage.py` | deletes all data after 18:00 for 40 evenings and confirms no model input changes |
+| `docs/` | notes for the author (in Russian) |
+
+**Assumptions worth knowing**
+
+- OpenAQ timestamps are treated as the end of each hourly average. If they marked the start, the forecast would in effect be issued at 19:00 instead of 18:00; the target (08:00–18:00 the next day) would still lie entirely in the future.
+- The CAMS values come from Open-Meteo's archive, which keeps the freshest model runs, so they are somewhat better than a true day-ahead CAMS forecast. This favours CAMS in the comparison.
+- The warning thresholds were chosen once, on validation data. The threshold sweep on the test days was added afterwards as a descriptive check and is labelled as such in `results/RESULTS.md`.
