@@ -22,14 +22,16 @@
     "seasonal": 26.5,
     "cams": 18.5,
     "linear": 29.0,
-    "model": 29.0
+    "model": 29.0,
+    "sensor_free": 36.0
   },
   "alert_thresholds_retuned_in_this_environment": {
     "persistence": 23.0,
     "seasonal": 26.5,
     "cams": 18.5,
     "linear": 29.0,
-    "model": 29.0
+    "model": 29.0,
+    "sensor_free": 36.0
   },
   "false_alarms_at_matched_misses_test": {
     "persistence": {
@@ -55,12 +57,20 @@
       "16": 50,
       "20": 47,
       "30": 27
+    },
+    "sensor_free": {
+      "5": 71,
+      "8": 66,
+      "11": 54,
+      "16": 47,
+      "20": 38,
+      "30": 27
     }
   },
   "library_versions": {
     "scikit-learn": "1.9.1",
-    "pandas": "3.0.5",
-    "numpy": "2.5.3"
+    "pandas": "3.1.1",
+    "numpy": "2.5.4"
   },
   "model_params": {
     "loss": "absolute_error",
@@ -72,6 +82,7 @@
     "random_state": 0
   },
   "n_features": 30,
+  "n_features_sensor_free": 21,
   "validation": {
     "n_days": 352,
     "bad_days": 86,
@@ -263,6 +274,44 @@
           2.464814046510617,
           5.6962794869778355
         ]
+      },
+      "sensor_free": {
+        "n": 352,
+        "mae": 11.878867497070564,
+        "bias": 1.7970197334135805,
+        "mae_gain_vs_persistence_pct": 21.475635052114384,
+        "mae_by_season": {
+          "heating season (Oct-Mar)": 19.89364719611233,
+          "warm season (Apr-Sep)": 4.132739631516236
+        },
+        "alerts_tuned": {
+          "threshold": 36.0,
+          "bad_days": 86,
+          "caught": 76,
+          "missed": 10,
+          "false_alarms": 34,
+          "correct_quiet": 232,
+          "recall": 0.8837209302325582,
+          "precision": 0.6909090909090909
+        },
+        "alerts_at_35": {
+          "bad_days": 86,
+          "caught": 77,
+          "missed": 9,
+          "false_alarms": 39,
+          "correct_quiet": 227,
+          "recall": 0.8953488372093024,
+          "precision": 0.6637931034482759
+        },
+        "change_days_right_side": {
+          "total": 30,
+          "smog_arrives": 24,
+          "smog_clears": 6
+        },
+        "mae_gain_ci95": [
+          1.844846642113895,
+          4.824717626309378
+        ]
       }
     },
     "change_days": {
@@ -272,7 +321,8 @@
     },
     "persistence_mae": 15.12761994949495,
     "band_10_90_coverage": 0.7414772727272727,
-    "band_mean_width": 31.373326363919272
+    "band_mean_width": 31.373326363919272,
+    "sensor_free_band_10_90_coverage": 0.7159090909090909
   },
   "test": {
     "n_days": 398,
@@ -465,6 +515,44 @@
           1.6813087188693279,
           4.499393977284296
         ]
+      },
+      "sensor_free": {
+        "n": 398,
+        "mae": 13.1801559381913,
+        "bias": -1.222124950946366,
+        "mae_gain_vs_persistence_pct": 13.798757138828666,
+        "mae_by_season": {
+          "heating season (Oct-Mar)": 20.59830603916494,
+          "warm season (Apr-Sep)": 4.28657266796324
+        },
+        "alerts_tuned": {
+          "threshold": 36.0,
+          "bad_days": 119,
+          "caught": 100,
+          "missed": 19,
+          "false_alarms": 40,
+          "correct_quiet": 239,
+          "recall": 0.8403361344537815,
+          "precision": 0.7142857142857143
+        },
+        "alerts_at_35": {
+          "bad_days": 119,
+          "caught": 101,
+          "missed": 18,
+          "false_alarms": 41,
+          "correct_quiet": 238,
+          "recall": 0.8487394957983193,
+          "precision": 0.7112676056338029
+        },
+        "change_days_right_side": {
+          "total": 40,
+          "smog_arrives": 25,
+          "smog_clears": 15
+        },
+        "mae_gain_ci95": [
+          0.5442226561423104,
+          3.720611075591383
+        ]
       }
     },
     "change_days": {
@@ -474,7 +562,8 @@
     },
     "persistence_mae": 15.289983648400732,
     "band_10_90_coverage": 0.7864321608040201,
-    "band_mean_width": 34.93575692684882
+    "band_mean_width": 34.93575692684882,
+    "sensor_free_band_10_90_coverage": 0.7512562814070352
   },
   "citizen_2026": null,
   "feature_importance_test": {

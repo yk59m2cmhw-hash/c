@@ -1,4 +1,7 @@
-"""The demo: pick an evening -> forecast for the next day, next to what really happened.
+"""The demo page.
+
+Tab 1: the forecast for the real tomorrow, from airport weather only (no PM2.5 sensor).
+Tab 2: pick a past evening -> forecast for the next day, next to what really happened.
 
 Used by app.py (Gradio web page) and by the notebook.
 """
@@ -14,6 +17,7 @@ import numpy as np
 import pandas as pd
 
 import almaty_air as aa
+import live
 
 warnings.filterwarnings("ignore")
 
@@ -46,6 +50,9 @@ class Forecaster:
         self.model = aa.fit_model(fit_rows)
         self.low, self.high = aa.fit_quantile_models(fit_rows)
         self.typical = fit_rows[aa.FEATURES].median()
+        # the sensor-free model (weather + calendar only), also trained on train+validation for the replay
+        self.free_model = aa.fit_model(fit_rows, aa.SENSOR_FREE_FEATURES)
+        self.live = None        # built on first use: the live model is trained on every day with a reference measurement
         self.test = parts["test"]
         self.first, self.last = self.test.index.min(), self.test.index.max()
 
@@ -105,6 +112,10 @@ class Forecaster:
         naive_wrong = (today > aa.ALERT_LEVEL) != bad
         naive = (f"“Tomorrow = today” would have said {today:.0f} µg/m³ — "
                  + ("on the wrong side of the action level." if naive_wrong else "on the correct side of the action level."))
+        free = float(self.free_model.predict(row[aa.SENSOR_FREE_FEATURES].to_frame().T.astype(float))[0])
+        free_warn = free > aa.ALERT_THRESHOLDS["sensor_free"]
+        free_line = (f"The sensor-free model (airport weather only, no PM2.5 input) would have said {free:.0f} µg/m³: "
+                     + ("a warning — " if free_warn else "no warning — ") + ("correct." if free_warn == bad else "wrong."))
 
         text = "\n\n".join([
             f"## Forecast for {tomorrow}",
@@ -114,11 +125,21 @@ class Forecaster:
             f"A warning is given when the forecast is above {self.threshold:.0f} µg/m³.",
             "**Why:**\n" + "\n".join(f"- {line}" for line in self.explain(row)),
             "---",
-            f"## What actually happened\n**Measured: {truth:.0f} µg/m³.** {verdict}\n\n{naive}",
+            f"## What actually happened\n**Measured: {truth:.0f} µg/m³.** {verdict}\n\n{naive}\n\n{free_line}",
             "*Prototype for one monitor in Almaty. The model cannot see tomorrow's weather, so sudden changes are often missed; "
             "on the test period it missed 16 of 119 smog days and raised 52 false alarms.*",
         ])
         return text, self.plot(day, pred, low, high, truth)
+
+    def tomorrow(self):
+        """Forecast for the real tomorrow from fresh airport weather. No PM2.5 measurement is used."""
+        try:
+            if self.live is None:
+                self.live = live.LiveForecaster(self.table)
+            return live.as_text(self.live.forecast())
+        except Exception as err:       # show a useful message instead of a stack trace
+            return (f"**The live forecast is not available right now ({type(err).__name__}: {err}).** "
+                    "The ‘Replay a past evening’ tab works without the internet.")
 
     def plot(self, day, pred, low, high, truth):
         history = self.table.loc[day - pd.Timedelta(days=6): day, "pm_day"]
@@ -156,16 +177,26 @@ def build_app(forecaster: Forecaster | None = None):
     with gr.Blocks(title="Smog Tomorrow: Almaty") as app:
         gr.Markdown(
             "# Smog Tomorrow: should tomorrow's PE lesson be outdoors?\n"
-            "An evening forecast of tomorrow's daytime air pollution (PM2.5) for schools in Almaty, Kazakhstan. "
-            f"Pick any evening from the test period ({fc.first.date()} to {fc.last.date()}). The model never saw these days in training, "
-            "so you can compare its forecast with what was really measured.")
-        with gr.Row():
-            date = gr.Textbox(label="Evening of (YYYY-MM-DD)", value=EXAMPLES[0], max_length=10, scale=3)
-            button = gr.Button("Forecast tomorrow", variant="primary", scale=1)
-        gr.Examples(examples=EXAMPLES, inputs=date, label="Examples: smog arrives · clean summer day · smog clears · a missed smog day · a false alarm")
-        with gr.Row():
-            text = gr.Markdown()
-            chart = gr.Plot(show_label=False)
-        button.click(fc.forecast, inputs=date, outputs=[text, chart])
-        date.submit(fc.forecast, inputs=date, outputs=[text, chart])
+            "An evening forecast of tomorrow's daytime air pollution (PM2.5) for schools in Almaty, Kazakhstan.")
+        with gr.Tab("Tomorrow (live, no sensor needed)"):
+            gr.Markdown(
+                "Almaty's public reference monitor stopped publishing in November 2025, so a school cannot look up today's PM2.5. "
+                "This forecast uses **airport weather reports only**: it downloads the latest ones and forecasts the real tomorrow.")
+            live_button = gr.Button("Forecast the real tomorrow", variant="primary")
+            live_text = gr.Markdown()
+            live_button.click(fc.tomorrow, inputs=None, outputs=live_text)
+        with gr.Tab("Replay a past evening (with the answer)"):
+            gr.Markdown(
+                f"Pick any evening from the test period ({fc.first.date()} to {fc.last.date()}). The model never saw these days in training, "
+                "so you can compare its forecast with what was really measured. Here the model also uses that day's PM2.5 readings.")
+            with gr.Row():
+                date = gr.Textbox(label="Evening of (YYYY-MM-DD)", value=EXAMPLES[0], max_length=10, scale=3)
+                button = gr.Button("Forecast tomorrow", variant="primary", scale=1)
+            gr.Examples(examples=EXAMPLES, inputs=date,
+                        label="Examples: smog arrives · clean summer day · smog clears · a missed smog day · a false alarm")
+            with gr.Row():
+                text = gr.Markdown()
+                chart = gr.Plot(show_label=False)
+            button.click(fc.forecast, inputs=date, outputs=[text, chart])
+            date.submit(fc.forecast, inputs=date, outputs=[text, chart])
     return app

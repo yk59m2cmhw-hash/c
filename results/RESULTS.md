@@ -9,6 +9,7 @@
 | Global model (CAMS) | 15.4 | -2% | 27.0 | 4.1 | 73 / 86 | 13 | 61 |
 | Linear model (ridge) | 11.5 | +24% | 19.1 | 4.1 | 79 / 86 | 7 | 38 |
 | **Our model (boosted trees)** | 11.1 | +27% | 18.6 | 3.9 | 81 / 86 | 5 | 41 |
+| Sensor-free model (weather + calendar only) | 11.9 | +21% | 19.9 | 4.1 | 76 / 86 | 10 | 34 |
 
 ## Test (evaluated once, after settings were frozen): 2024-10-11 .. 2025-11-14, 398 days, 119 smog days (> 35 µg/m³)
 
@@ -19,6 +20,7 @@
 | Global model (CAMS) | 16.6 | -9% | 27.1 | 4.0 | 110 / 119 | 9 | 83 |
 | Linear model (ridge) | 13.1 | +14% | 20.3 | 4.5 | 98 / 119 | 21 | 45 |
 | **Our model (boosted trees)** | 12.3 | +20% | 19.4 | 3.8 | 103 / 119 | 16 | 52 |
+| Sensor-free model (weather + calendar only) | 13.2 | +14% | 20.6 | 4.3 | 100 / 119 | 19 | 40 |
 
 ## Which inputs matter (validation only, MAE in µg/m³)
 
@@ -38,25 +40,39 @@
 | Global model (CAMS) | 47 / 119 | 72 | 8 |
 | Linear model (ridge) | 86 / 119 | 33 | 21 |
 | **Our model (boosted trees)** | 90 / 119 | 29 | 34 |
+| Sensor-free model (weather + calendar only) | 101 / 119 | 18 | 41 |
 
 ## Does the warning result depend on the threshold? (test; added after the test was scored, descriptive)
 
 Fewest false alarms each method can reach while missing at most N smog days, when its threshold is swept on the test days:
 
-| Missed at most | Tomorrow = today | Global model (CAMS) | Our model |
-|---|---|---|---|
-| 5 | 122 | 121 | 80 |
-| 8 | 87 | 86 | 70 |
-| 11 | 76 | 70 | 67 |
-| 16 | 59 | 47 | 50 |
-| 20 | 50 | 38 | 47 |
-| 30 | 38 | 33 | 27 |
+| Missed at most | Tomorrow = today | Global model (CAMS) | Our model | Sensor-free model |
+|---|---|---|---|---|
+| 5 | 122 | 121 | 80 | 71 |
+| 8 | 87 | 86 | 70 | 66 |
+| 11 | 76 | 70 | 67 | 54 |
+| 16 | 59 | 47 | 50 | 47 |
+| 20 | 50 | 38 | 47 | 38 |
+| 30 | 38 | 33 | 27 | 27 |
 
 95% interval for the model's MAE gain over persistence on test: 1.7 .. 4.5 µg/m³ (bootstrap over weeks).
 
 Days when the air crossed the 35 µg/m³ line between today and tomorrow: 69 (35 smog arrives, 34 smog clears). Persistence is wrong on all of them by construction; the model's forecast was on the correct side on 36 (19 arrivals, 17 clearings).
 
 Model's 10-90% range contained the measured value on 79% of test days (target 80%).
+
+## Forecasting without any PM2.5 sensor (added on 15 Nov 2026)
+
+The reference monitor stopped publishing on 14 Nov 2025, so today neither our main model nor 'tomorrow = today' can be computed for the real tomorrow. The sensor-free model uses airport weather and the calendar only. Its inputs, settings and warning threshold (36.0, chosen on validation) were committed in `37fb006` before it was scored on the test period. The test period had already been scored once for the main model, so this is a second look at the same period.
+
+| Test period | Tomorrow = today | Our model | Sensor-free model |
+|---|---|---|---|
+| MAE, µg/m³ | 15.3 | 12.3 | 13.2 |
+| 95% interval of the MAE gain over persistence | - | 1.7 .. 4.5 | 0.5 .. 3.7 |
+| Smog days missed (of 119) | 11 | 16 | 19 |
+| False alarms | 76 | 52 | 40 |
+| Correct side on the 69 change days | 0 | 36 | 40 |
+| 10-90% range contains the measured value | - | 79% | 75% |
 
 ## Largest misses on the test period
 

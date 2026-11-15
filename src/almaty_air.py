@@ -64,7 +64,11 @@ def load_cams(path: Path = RAW / "cams_openmeteo_almaty_pm25_hourly.csv") -> pd.
 
 def load_metar(path: Path = RAW / "iem_uaaa_metar.csv.gz") -> pd.DataFrame:
     """Airport weather reports with a local-time index and SI units."""
-    df = pd.read_csv(path, na_values=["M"], low_memory=False)
+    return parse_metar(pd.read_csv(path, na_values=["M"], low_memory=False))
+
+
+def parse_metar(df: pd.DataFrame) -> pd.DataFrame:
+    """Turns raw Iowa Mesonet columns into the weather table used everywhere (also by the live forecast)."""
     index = pd.DatetimeIndex(pd.to_datetime(df["valid"]).dt.tz_localize("UTC")).tz_convert(TZ)
     out = pd.DataFrame(index=index)
     out["temp"] = pd.to_numeric(df["tmpc"], errors="coerce").to_numpy()                 # deg C
