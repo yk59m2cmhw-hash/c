@@ -55,7 +55,7 @@ Test period: 398 days, 119 smog days. MAE is the average miss in µg/m³. Cost =
 
 ![Forecast against measurements in winter 2024-25](results/fig_forecast_vs_measured.png)
 
-**Where it fails.** The eight largest misses are all in January–February 2025, when PM2.5 doubled or halved overnight (80 → 165; 184 → 48). Wind at the airport was about 2 m/s on both days with no rain or snow, so nothing in our inputs announced the change. We think the cause is the temperature inversion above the city forming or breaking, which a ground station 14 km away cannot see, and neither model knows anything about tomorrow's weather. The live forecast has a second limit: with no public reference data for 2026 we cannot score it, so the 2024–25 test is our only evidence for how far to trust it.
+**Where it fails.** The eight largest misses are all in January–February 2025, when PM2.5 doubled or halved overnight (80 → 165; 184 → 48). Wind at the airport was about 2 m/s on both days with no rain or snow, so nothing in our inputs announced the change. We think the cause is the temperature inversion above the city forming or breaking, which a ground station 14 km away cannot see; a weather-balloon study of Almaty found that the most polluted cold-season days come with a shallow mixing layer and calm winds ([Tursumbayeva et al., 2022](https://doi.org/10.4209/aaqr.210294)). Neither model knows anything about tomorrow's weather. The live forecast has a second limit: with no public reference data for 2026 we cannot score it, so the 2024–25 test is our only evidence for how far to trust it.
 
 ## What we'd do next
 
@@ -67,6 +67,7 @@ Test period: 398 days, 119 smog days. MAE is the average miss in µg/m³. Cost =
 - **PM2.5:** OpenAQ public data archive, location [8876 "Almaty"](https://explore.openaq.org/locations/8876), provider AirNow ([archive docs](https://docs.openaq.org/aws/about)).
 - **Weather:** Iowa Environmental Mesonet [ASOS/METAR archive](https://mesonet.agron.iastate.edu/request/download.phtml), station UAAA.
 - **Global model:** CAMS global forecasts (Copernicus Atmosphere Monitoring Service) through the [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api).
+- **Background reading:** Tursumbayeva, Kerimray, Karaca and Permadi (2022), "Planetary Boundary Layer and its Relationship with PM2.5 Concentrations in Almaty, Kazakhstan", *Aerosol and Air Quality Research* 22(8), [doi:10.4209/aaqr.210294](https://doi.org/10.4209/aaqr.210294). We read the abstract, not the full paper.
 - **Libraries:** pandas, NumPy, scikit-learn, matplotlib, Gradio. **Starting point:** Veritas AI project brief 4.3.2.
 - **AI tools:** Claude Code (Anthropic), an AI coding agent. It did most of the engineering: it found the data sources, wrote the code, ran the experiments and drafted this write-up. I set the task and its rules (one real user, public data only, a fair baseline, a test period locked before scoring, honest reporting), reviewed the results, and can explain every step.
 
