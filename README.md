@@ -3,7 +3,7 @@
 **Track:** AI + Climate · **Team:** solo participant (name on the submission form) · **Starting point:** suggested project 4.3.2, Next-day air quality forecast
 
 **Code:** [almaty_smog_tomorrow.ipynb](almaty_smog_tomorrow.ipynb) with saved outputs; it runs top to bottom in under a minute, no API key, no GPU ·
-[open in Google Colab](https://colab.research.google.com/github/yk59m2cmhw-hash/c/blob/claude/epic-goldberg-ya2g09/almaty_smog_tomorrow.ipynb) ·
+[open in Google Colab](https://colab.research.google.com/github/yk59m2cmhw-hash/c/blob/claude/keen-bohr-rsb2xk/almaty_smog_tomorrow.ipynb) ·
 every number below is printed by the notebook and saved in [`results/metrics.json`](results/metrics.json)
 
 ## The problem
