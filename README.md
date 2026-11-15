@@ -1,7 +1,6 @@
 # Smog Tomorrow: should tomorrow's PE lesson be outdoors?
 
-**Track:** AI + Climate
-**Team:** Bakdaulet (solo)
+**Track:** AI + Climate · **Team:** Bakdaulet (solo)
 
 **Demo video (2 min, captions):** [`docs/demo_video.mp4`](docs/demo_video.mp4) · **Notebook with saved outputs:** [`notebooks/SmogTomorrow.ipynb`](notebooks/SmogTomorrow.ipynb) · [open in Colab](https://colab.research.google.com/github/yk59m2cmhw-hash/c/blob/claude/sleepy-mendel-te40eu/notebooks/SmogTomorrow.ipynb) · **All results:** [`results/RESULTS.md`](results/RESULTS.md)
 
