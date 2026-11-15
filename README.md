@@ -3,7 +3,7 @@
 **Track:** AI + Climate
 **Team:** Bakdaulet (solo)
 
-**Notebook with saved outputs:** [`notebooks/SmogTomorrow.ipynb`](notebooks/SmogTomorrow.ipynb) · [open in Colab](https://colab.research.google.com/github/yk59m2cmhw-hash/c/blob/claude/sleepy-mendel-te40eu/notebooks/SmogTomorrow.ipynb) · **All results:** [`results/RESULTS.md`](results/RESULTS.md)
+**Demo video (2 min, captions):** [`docs/demo_video.mp4`](docs/demo_video.mp4) · **Notebook with saved outputs:** [`notebooks/SmogTomorrow.ipynb`](notebooks/SmogTomorrow.ipynb) · [open in Colab](https://colab.research.google.com/github/yk59m2cmhw-hash/c/blob/claude/sleepy-mendel-te40eu/notebooks/SmogTomorrow.ipynb) · **All results:** [`results/RESULTS.md`](results/RESULTS.md)
 
 ## The problem
 
@@ -24,11 +24,11 @@ Every evening at 18:00 the tool forecasts tomorrow's school hours (08:00–18:00
 
 We started from suggested project **4.3.2 Next-day air quality forecast** and added:
 
-- **Our own place and user:** Almaty, a school, and a target that matches the decision (the mean over school hours, forecast at 18:00 from data that already exists).
-- **Our own question 1: is a free global forecast enough for Almaty?** No. The CAMS global model reads 13.6 µg/m³ too low here, and with the plain rule "warn above 35" it would have warned on only 47 of 119 smog days.
-- **Our own question 2: what happens on the days the air changes?** These are the days a forecast is for, and "tomorrow = today" is wrong on every one of them.
-- **Our own question 3: can a school get a useful warning with no PM2.5 monitor at all?** The public record of the monitor we trained on ends on 14 November 2025, so today the main model cannot be run for the real tomorrow. A model that sees only airport weather and the calendar does almost as well, and that is the one that forecasts the real tomorrow.
-- **A stated decision rule and a locked test.** A missed smog day counts three times a false alarm, and every method's warning threshold was chosen on validation data with that rule. The split and settings were committed to git before the test period was scored (`7f98623` for the main model, `37fb006` for the sensor-free model).
+- **Our own place and user:** Almaty, a school, and a target that matches the decision: the mean over school hours, forecast at 18:00 from data that already exists.
+- **Question 1: is a free global forecast enough for Almaty?** No. The CAMS global model reads 13.6 µg/m³ too low here; with the plain rule "warn above 35" it would have warned on only 47 of 119 smog days.
+- **Question 2: can a school get a useful warning with no PM2.5 monitor?** The public record of the monitor we trained on ends on 14 November 2025, so the main model cannot be run for the real tomorrow. A model that sees only airport weather and the calendar does almost as well, and it is the one that forecasts the real tomorrow.
+- **Question 3: what happens on the days the air changes?** "Tomorrow = today" is wrong on every one of them. Our models are right on about half, which is no better than a monthly average.
+- **A stated decision rule and a locked test.** A missed smog day counts three times a false alarm, and every warning threshold was chosen on validation data with that rule. Settings were committed to git before each model was scored on the test period (`7f98623`, `37fb006`).
 
 ## How it works
 
@@ -40,7 +40,7 @@ We started from suggested project **4.3.2 Next-day air quality forecast** and ad
 
 ## Results
 
-Test period: 398 days, 119 smog days. MAE is the average miss in µg/m³. Cost is 3 × missed + false alarms.
+Test period: 398 days, 119 smog days. MAE is the average miss in µg/m³. Cost = 3 × missed + false alarms.
 
 | Method | Needs a PM2.5 monitor | MAE | Smog days missed | False alarms | Cost |
 |---|---|---|---|---|---|
@@ -50,9 +50,9 @@ Test period: 398 days, 119 smog days. MAE is the average miss in µg/m³. Cost i
 | **Our main model** | yes | **12.3** | 16 | 52 | 100 |
 | **Our sensor-free model** | **no** | 13.2 | 19 | 40 | 97 |
 
-Our baseline scored 15.3 and our main model 12.3 on held-out test data, 20% lower (95% interval for the gain: 1.7 to 4.5 µg/m³). The model raises a third fewer false alarms than the baseline but **misses more smog days, 16 against 11**, so by our 3-to-1 rule it is only modestly ahead. The warning counts depend on the threshold: when we sweep it, the model raises fewer false alarms than the baseline at every number of missed days we checked (67 against 76 at 11 missed), while CAMS with a re-tuned threshold comes close at some settings.
-
-The sensor-free model scored 13.2 with no PM2.5 input, 14% lower than a baseline that needs a monitor (95% interval for the gain: 0.5 to 3.7). It misses the most smog days (19) and raises the fewest false alarms (40), so by the cost rule the three are close. Knowing today's PM2.5 improves the number, but most of the warning comes from the weather. On the 69 days when the air crossed the 35 line, the main model was on the right side 36 times and the sensor-free model 40 times; a plain monthly average gets 35 right, so on these days our models are barely better than the calendar. This was a second look at the test period: it had been scored once for the main model before the sensor-free model was scored, and no choice for the sensor-free model used it.
+- **Main model.** Our baseline scored 15.3 and our model 12.3 on held-out test data, 20% lower (95% interval for the gain: 1.7 to 4.5). It raises a third fewer false alarms than the baseline but **misses more smog days, 16 against 11**, so by our cost rule it is only modestly ahead.
+- **Sensor-free model.** 13.2 with no PM2.5 input, 14% lower than a baseline that needs a monitor (interval 0.5 to 3.7). It misses the most smog days (19) and raises the fewest false alarms (40). Knowing today's PM2.5 improves the number, but most of the warning comes from the weather.
+- **Caveats.** The warning counts depend on the threshold; a sweep is in [`results/RESULTS.md`](results/RESULTS.md). The sensor-free model was scored after the main model, so it was a second look at the same test period; none of its settings used it. On the 69 days when the air crossed the 35 line, the main model was on the right side 36 times, the sensor-free model 40 and a plain monthly average 35.
 
 ![Forecast against measurements in winter 2024-25](results/fig_forecast_vs_measured.png)
 
