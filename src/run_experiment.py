@@ -142,10 +142,11 @@ def fig_timeseries(pred: pd.DataFrame, path: Path) -> None:
 
 def fig_mae(summary: dict, path: Path) -> None:
     names = [("persistence", "Tomorrow = today\n(persistence)"), ("seasonal", "Average for\nthe month"),
-             ("cams", "Global model\n(CAMS)"), ("linear", "Linear model"), ("model", "Our model\n(boosted trees)")]
+             ("cams", "Global model\n(CAMS)"), ("linear", "Linear model"), ("model", "Our model\n(boosted trees)"),
+             ("sensor_free", "Sensor-free\n(weather only)")]
     values = [summary["methods"][k]["mae"] for k, _ in names]
-    fig, ax = plt.subplots(figsize=(8.4, 4.4), dpi=160)
-    bars = ax.bar([label for _, label in names], values, width=0.58, color=[NEUTRAL] * 4 + [BLUE])
+    fig, ax = plt.subplots(figsize=(9.6, 4.4), dpi=160)
+    bars = ax.bar([label for _, label in names], values, width=0.58, color=[NEUTRAL] * 4 + [BLUE, AQUA])
     for bar, value in zip(bars, values):
         ax.text(bar.get_x() + bar.get_width() / 2, value + 0.25, f"{value:.1f}", ha="center", color=INK, fontsize=11)
     ax.set_ylabel("Mean absolute error, µg/m³ (lower is better)", color=MUTED, fontsize=10)
@@ -157,7 +158,8 @@ def fig_mae(summary: dict, path: Path) -> None:
 
 
 def fig_alerts(summary: dict, path: Path) -> None:
-    names = [("persistence", "Tomorrow = today"), ("cams", "Global model (CAMS)"), ("model", "Our model")]
+    names = [("persistence", "Tomorrow = today"), ("cams", "Global model (CAMS)"), ("model", "Our model"),
+             ("sensor_free", "Sensor-free (weather only)")]
     missed = [summary["methods"][k]["alerts_tuned"]["missed"] for k, _ in names]
     false = [summary["methods"][k]["alerts_tuned"]["false_alarms"] for k, _ in names]
     x = np.arange(len(names))
