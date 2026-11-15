@@ -30,7 +30,9 @@ import almaty_air as aa
 
 warnings.filterwarnings("ignore")
 OUT = aa.ROOT / "results"
-CITIZEN_FILE = aa.RAW / "sensor_community_78340_pm25_hourly.csv"
+# Two low-cost citizen sensors (sensor.community, SDS011) used ONLY for the external check on 2026.
+CITIZEN_SENSORS = {78340: "city centre", 90941: "west of the city"}
+MIN_CITIZEN_DAYS = 60       # fixed in PROJECT_SPEC.md before the data was looked at: fewer days than this are not reported
 
 # Chart colours (colour-blind-safe palette, checked with a validator)
 INK, MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
@@ -180,6 +182,44 @@ def fig_alerts(summary: dict, path: Path) -> None:
     plt.close(fig)
 
 
+def citizen_check(table: pd.DataFrame, metar: pd.DataFrame, cams: pd.Series, thresholds: dict) -> dict | None:
+    """External check: frozen models against two citizen sensors in 2026. Nothing is fitted or tuned on this data.
+
+    The models are trained on every reference-monitor day (2020-04 .. 2025-11). For each sensor the 'truth' is that
+    sensor's own next-day daytime mean, so this is a different instrument, in a different place, in a different year.
+    """
+    usable = table[table["y"].notna() & table["persistence"].notna()]
+    result, daily = {}, {}
+    for sensor_id, place in CITIZEN_SENSORS.items():
+        path = aa.RAW / f"sensor_community_{sensor_id}_pm25_hourly.csv"
+        if not path.exists():
+            continue
+        t = aa.build_table(aa.load_pm(path, stamp="start"), metar, cams)
+        rows = t[t["y"].notna() & t["persistence"].notna()]
+        if len(rows) < MIN_CITIZEN_DAYS:
+            continue
+        pred = predict_all(usable, rows)
+        pred.round(2).to_csv(OUT / f"citizen_2026_sensor_{sensor_id}_predictions.csv", index=False)
+        daily[sensor_id] = t["pm_day"].dropna()
+        entry = {"place": place, "n_days": int(len(pred)), "first_day": str(pred["target_day"].min().date()),
+                 "last_day": str(pred["target_day"].max().date()), "bad_days": int((pred["y"] > aa.ALERT_LEVEL).sum()),
+                 "heating_season_days": int(pred["target_day"].dt.month.isin([10, 11, 12, 1, 2, 3]).sum()), "methods": {}}
+        for name in ("persistence", "cams", "model", "sensor_free"):
+            ok = pred[name].notna()
+            y, f = pred.loc[ok, "y"], pred.loc[ok, name]
+            entry["methods"][name] = {"n": int(ok.sum()), "mae": aa.mae(y, f), "bias": float((f - y).mean()),
+                                      "rank_correlation": float(y.corr(f, method="spearman")),
+                                      "alerts": {"threshold": thresholds[name], **aa.alert_counts(y, f, thresholds[name])}}
+        result[str(sensor_id)] = entry
+    if len(daily) == 2:      # how well do the two sensors agree with each other on the same days?
+        a, b = (daily[k] for k in CITIZEN_SENSORS)
+        both = pd.concat([a, b], axis=1, keys=["a", "b"]).dropna()
+        result["between_sensors"] = {"n_days": int(len(both)), "rank_correlation": float(both["a"].corr(both["b"], method="spearman")),
+                                     "mean_centre": float(both["a"].mean()), "mean_west": float(both["b"].mean()),
+                                     "same_side_of_35": float(((both["a"] > aa.ALERT_LEVEL) == (both["b"] > aa.ALERT_LEVEL)).mean())}
+    return result or None
+
+
 # --------------------------------------------------------------------------- #
 def markdown_report(valid: dict, test: dict, worst: pd.DataFrame, importance: pd.Series, citizen: dict | None, ablation: dict,
                     matched: dict) -> str:
@@ -241,12 +281,31 @@ def markdown_report(valid: dict, test: dict, worst: pd.DataFrame, importance: pd
               "## What the model relies on (drop in accuracy when one input is shuffled, test period)", "",
               importance.round(2).to_frame("MAE increase, µg/m³").to_markdown(), ""]
     if citizen:
-        lines += [f"## Extra test: citizen sensor, {citizen['first_day']} .. {citizen['last_day']}, {citizen['n_days']} days", "",
-                  "| Method | MAE, µg/m³ | Smog days caught | Missed | False alarms |", "|---|---|---|---|---|"]
-        for name, cm in citizen["methods"].items():
-            a = cm["alerts_tuned"]
-            lines.append(f"| {label[name]} | {cm['mae']:.1f} | {a['caught']} / {a['bad_days']} | {a['missed']} | {a['false_alarms']} |")
-        lines.append("")
+        names = {"persistence": "That sensor's own 'tomorrow = today'", "cams": "Global model (CAMS)",
+                 "model": "Our main model, fed with that sensor's readings", "sensor_free": "Our sensor-free model (no PM2.5 input)"}
+        lines += ["## External check on two citizen sensors, 2026 (added on 15 Nov 2026)", "",
+                  "A different instrument (low-cost SDS011 optical sensors from sensor.community), in different places in Almaty, in a year "
+                  "no model has seen. The models are frozen: trained on the reference monitor (2020-04 .. 2025-11), with the thresholds above. "
+                  "Nothing was fitted or tuned on this data, and the plan for this check was written in PROJECT_SPEC.md before the data was "
+                  "looked at. 'Measured' here means the citizen sensor's own next-day daytime mean, which is not reference-grade: these sensors "
+                  "read too high in humid air and are not calibrated against the reference monitor. Read the rank correlation (do the forecast "
+                  "and the sensor order the days the same way; 1 is perfect) before the MAE.", ""]
+        for sensor_id, c in citizen.items():
+            if sensor_id == "between_sensors":
+                continue
+            lines += [f"### Sensor {sensor_id} ({c['place']}): {c['first_day']} .. {c['last_day']}, {c['n_days']} days "
+                      f"({c['heating_season_days']} in the heating season), {c['bad_days']} days above 35 µg/m³ by this sensor", "",
+                      "| Method | Rank correlation | MAE, µg/m³ | Bias, µg/m³ | Smog days caught | Missed | False alarms |", "|---|---|---|---|---|---|---|"]
+            for name, cm in c["methods"].items():
+                al = cm["alerts"]
+                lines.append(f"| {names[name]} | {cm['rank_correlation']:.2f} | {cm['mae']:.1f} | {cm['bias']:+.1f} | "
+                             f"{al['caught']} / {al['bad_days']} | {al['missed']} | {al['false_alarms']} |")
+            lines.append("")
+        if "between_sensors" in citizen:
+            bs = citizen["between_sensors"]
+            lines += [f"The two sensors against each other on the same {bs['n_days']} days: rank correlation {bs['rank_correlation']:.2f}; "
+                      f"mean {bs['mean_centre']:.1f} (centre) and {bs['mean_west']:.1f} (west) µg/m³; they are on the same side of 35 µg/m³ on "
+                      f"{100 * bs['same_side_of_35']:.0f}% of days. This is how much 'the truth' itself differs between two places and two devices.", ""]
     return "\n".join(lines)
 
 
@@ -305,15 +364,8 @@ def run() -> dict:
     perm = permutation_importance(final_model, test[aa.FEATURES], test["y"], scoring="neg_mean_absolute_error", n_repeats=20, random_state=0)
     importance = pd.Series(perm.importances_mean, index=aa.FEATURES).sort_values(ascending=False).head(8)
 
-    # 4) optional extra test: a different, low-cost sensor in 2026 (nothing is tuned on it)
-    summary_citizen = None
-    if CITIZEN_FILE.exists() and sum(1 for _ in CITIZEN_FILE.open()) > 24 * 30:
-        citizen_table = aa.build_table(aa.load_pm(CITIZEN_FILE, stamp="start"), metar, cams)
-        rows = citizen_table[citizen_table["y"].notna() & citizen_table["persistence"].notna()]
-        usable = table[table["y"].notna() & table["persistence"].notna()]       # all reference-monitor days
-        pred_citizen = predict_all(usable, rows)
-        summary_citizen = summarise(pred_citizen, thresholds, methods)
-        pred_citizen.round(2).to_csv(OUT / "citizen_2026_predictions.csv", index=False)
+    # 4) external check: two low-cost citizen sensors in 2026 (frozen models; nothing is tuned on this data)
+    summary_citizen = citizen_check(table, metar, cams, thresholds)
 
     # 5) save everything
     pred_test.round(2).to_csv(OUT / "test_predictions.csv", index=False)

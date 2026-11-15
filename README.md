@@ -26,7 +26,7 @@ We started from suggested project **4.3.2 Next-day air quality forecast** and ad
 - **Our own place and user:** Almaty, a school, and a target that matches the decision: the mean over school hours, forecast at 18:00 from data that already exists.
 - **Question 1: is a free global forecast enough for Almaty?** No. The CAMS global model reads 13.6 µg/m³ too low here; with the plain rule "warn above 35" it would have warned on only 47 of 119 smog days.
 - **Question 2: can a school get a useful warning with no PM2.5 monitor?** The public record of the monitor we trained on ends on 14 November 2025, so the main model cannot be run for the real tomorrow. A model that sees only airport weather and the calendar does almost as well, and it is the one that forecasts the real tomorrow.
-- **Question 3: what happens on the days the air changes?** "Tomorrow = today" is wrong on every one of them. Our models are right on about half, which is no better than a monthly average.
+- **Question 3: what happens on the days the air changes?** "Tomorrow = today" is wrong on all 69 of them. Our models are right on 36 and 40, barely better than a monthly average (35).
 - **A stated decision rule and a locked test.** A missed smog day counts three times a false alarm, and every warning threshold was chosen on validation data with that rule. Settings were committed to git before each model was scored on the test period (`7f98623`, `37fb006`).
 
 ## How it works
@@ -51,7 +51,7 @@ Test period: 398 days, 119 smog days. MAE is the average miss in µg/m³. Cost =
 
 - **Main model.** Our baseline scored 15.3 and our model 12.3 on held-out test data, 20% lower (95% interval for the gain: 1.7 to 4.5). It raises a third fewer false alarms than the baseline but **misses more smog days, 16 against 11**, so by our cost rule it is only modestly ahead.
 - **Sensor-free model.** 13.2 with no PM2.5 input, 14% lower than a baseline that needs a monitor (interval 0.5 to 3.7). It misses the most smog days (19) and raises the fewest false alarms (40). Knowing today's PM2.5 improves the number, but most of the warning comes from the weather.
-- **Caveats.** The warning counts depend on the threshold; a sweep is in [`results/RESULTS.md`](results/RESULTS.md). The sensor-free model was scored after the main model, so it was a second look at the same test period; none of its settings used it. On the 69 days when the air crossed the 35 line, the main model was on the right side 36 times, the sensor-free model 40 and a plain monthly average 35.
+- **Caveats.** The warning counts depend on the threshold; a sweep is in [`results/RESULTS.md`](results/RESULTS.md). The sensor-free model was scored after the main model, so it was a second look at the same test period; none of its settings used it.
 
 ![Forecast against measurements in winter 2024-25](results/fig_forecast_vs_measured.png)
 
@@ -67,7 +67,7 @@ Test period: 398 days, 119 smog days. MAE is the average miss in µg/m³. Cost =
 - **PM2.5:** OpenAQ public data archive, location [8876 "Almaty"](https://explore.openaq.org/locations/8876), provider AirNow ([archive docs](https://docs.openaq.org/aws/about)).
 - **Weather:** Iowa Environmental Mesonet [ASOS/METAR archive](https://mesonet.agron.iastate.edu/request/download.phtml), station UAAA.
 - **Global model:** CAMS global forecasts (Copernicus Atmosphere Monitoring Service) through the [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api).
-- **Background reading:** Tursumbayeva, Kerimray, Karaca and Permadi (2022), "Planetary Boundary Layer and its Relationship with PM2.5 Concentrations in Almaty, Kazakhstan", *Aerosol and Air Quality Research* 22(8), [doi:10.4209/aaqr.210294](https://doi.org/10.4209/aaqr.210294). We read the abstract, not the full paper.
+- **Background reading:** Tursumbayeva et al. (2022), *Aerosol and Air Quality Research* 22(8), [doi:10.4209/aaqr.210294](https://doi.org/10.4209/aaqr.210294) (abstract only).
 - **Libraries:** pandas, NumPy, scikit-learn, matplotlib, Gradio. **Starting point:** Veritas AI project brief 4.3.2.
 - **AI tools:** Claude Code (Anthropic), an AI coding agent. It did most of the engineering: it found the data sources, wrote the code, ran the experiments and drafted this write-up. I set the task and its rules (one real user, public data only, a fair baseline, a test period locked before scoring, honest reporting), reviewed the results, and can explain every step.
 

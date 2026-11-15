@@ -44,8 +44,9 @@ METAR_START = dt.date(2020, 1, 1)
 
 CAMS_START = dt.date(2022, 8, 1)  # first day served by the Open-Meteo air-quality API
 
-SENSOR_ID, SENSOR_TYPE = 78340, "sds011"   # sensor.community node in central Almaty
-SENSOR_START = dt.date(2026, 1, 15)        # first day present in the archive
+SENSOR_IDS, SENSOR_TYPE = (78340, 90941), "sds011"   # two sensor.community nodes in Almaty (city centre, west)
+SENSOR_START = dt.date(2026, 1, 11)                  # both appear in the archive in mid-January 2026
+SENSOR_MIN_READINGS = 6                              # readings needed for an hourly mean (a sensor reports about 24 an hour)
 
 
 def http_get(url: str, timeout: int = 120, retries: int = 5) -> bytes | None:
@@ -159,54 +160,66 @@ def download_cams() -> Path:
 
 
 # --------------------------------------------------------------------------- #
-# 4. Citizen sensor (sensor.community archive, one small CSV per day)
+# 4. Citizen sensors (sensor.community archive, one small CSV per sensor per day)
 # --------------------------------------------------------------------------- #
-def download_citizen_sensor() -> Path:
-    """Daily files are cached in data/cache/ so an interrupted run can resume.
-
-    The volunteer-run archive sometimes drops connections; a day that cannot be
-    fetched is skipped and reported, and can be filled in by running again.
-    """
-    cache = RAW.parent / "cache" / "sensor_community"
-    cache.mkdir(parents=True, exist_ok=True)
-    day, end = SENSOR_START, dt.date.today() - dt.timedelta(days=1)
-    fetched = missing = failed = 0
-    while day <= end:
-        key = day.isoformat()
-        target = cache / f"{key}.csv"
-        if not target.exists():
-            url = f"https://archive.sensor.community/{key}/{key}_{SENSOR_TYPE}_sensor_{SENSOR_ID}.csv"
-            try:
-                blob = http_get(url, timeout=60, retries=3)
-            except RuntimeError:
-                failed += 1
-                blob = b""
-                time.sleep(20)
-            else:
-                if blob is None:
-                    missing += 1
-                    target.write_bytes(b"")     # remember that this day does not exist
-                else:
-                    fetched += 1
-                    target.write_bytes(blob)
-            time.sleep(1.0)  # be polite to the volunteer-run archive
-        day += dt.timedelta(days=1)
-
+def citizen_hourly(sensor_id: int, cache: Path) -> Path:
+    """Hourly PM2.5 means from the cached daily files of one sensor (no network)."""
     hourly: dict[str, list[float]] = {}
-    for file in sorted(cache.glob("*.csv")):
+    for file in sorted(cache.glob(f"*_sensor_{sensor_id}.csv")):
         for row in csv.DictReader(io.StringIO(file.read_text()), delimiter=";"):
             try:
-                hourly.setdefault(row["timestamp"][:13], []).append(float(row["P2"]))  # P2 = PM2.5
+                value = float(row["P2"])                      # P2 = PM2.5 in ug/m3
             except (ValueError, KeyError, TypeError):
                 continue
-    rows = [[hour.replace("T", " ") + ":00", f"{sum(v) / len(v):.2f}", str(len(v))] for hour, v in sorted(hourly.items())]
-    path = RAW / f"sensor_community_{SENSOR_ID}_pm25_hourly.csv"
+            if 0 <= value < 999:                              # 999.9 is the sensor's "out of range" reading
+                hourly.setdefault(row["timestamp"][:13], []).append(value)
+    rows = [[hour.replace("T", " ") + ":00", f"{sum(v) / len(v):.2f}", str(len(v))]
+            for hour, v in sorted(hourly.items()) if len(v) >= SENSOR_MIN_READINGS]
+    path = RAW / f"sensor_community_{sensor_id}_pm25_hourly.csv"
     with path.open("w", newline="") as fh:
         writer = csv.writer(fh)
         writer.writerow(["datetime_utc", "pm25", "n_readings"])
         writer.writerows(rows)
-    print(f"[citizen] {fetched} new daily files, {missing} days absent, {failed} days failed (rerun to retry), "
-          f"{len(rows)} hourly means -> {path.name}")
+    days = len({r[0][:10] for r in rows})
+    print(f"[citizen {sensor_id}] {len(rows)} hourly means on {days} days -> {path.name}")
+    return path
+
+
+def download_citizen_sensor() -> Path:
+    """Daily files are cached in data/cache/ so an interrupted run can resume.
+
+    The volunteer-run archive is slow and often resets connections (about 2-6 files a minute
+    from our machine), so a day that cannot be fetched is skipped, reported, and can be
+    filled in by running again. One connection at a time, to be polite.
+    """
+    cache = RAW.parent / "cache" / "sensor_community"
+    cache.mkdir(parents=True, exist_ok=True)
+    end = dt.date.today() - dt.timedelta(days=1)
+    path = None
+    for sensor_id in SENSOR_IDS:
+        day, fetched, missing, failed = SENSOR_START, 0, 0, 0
+        while day <= end:
+            key = day.isoformat()
+            target = cache / f"{key}_{SENSOR_TYPE}_sensor_{sensor_id}.csv"
+            absent = target.with_suffix(".csv.missing")
+            if not target.exists() and not absent.exists():
+                url = f"https://archive.sensor.community/{key}/{target.name}"
+                try:
+                    blob = http_get(url, timeout=60, retries=3)
+                except RuntimeError:
+                    failed += 1
+                    time.sleep(8)
+                else:
+                    if blob is None:
+                        missing += 1
+                        absent.write_bytes(b"")      # remember that this day does not exist
+                    else:
+                        fetched += 1
+                        target.write_bytes(blob)
+                    time.sleep(1.0)
+            day += dt.timedelta(days=1)
+        print(f"[citizen {sensor_id}] {fetched} new daily files, {missing} days absent, {failed} days failed (rerun to retry)")
+        path = citizen_hourly(sensor_id, cache)
     return path
 
 
