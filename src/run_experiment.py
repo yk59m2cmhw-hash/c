@@ -1,0 +1,292 @@
+#!/usr/bin/env python3
+"""Run the whole experiment and write tables and figures to results/.
+
+    python src/run_experiment.py
+
+Steps: build the daily table -> chronological split -> baselines and model on
+validation (to choose alert thresholds) -> refit on train+validation -> ONE
+evaluation on the test period -> error analysis -> optional extra test on the
+2026 citizen sensor.
+"""
+from __future__ import annotations
+
+import json
+import warnings
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.impute import SimpleImputer
+from sklearn.inspection import permutation_importance
+from sklearn.linear_model import RidgeCV
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+import almaty_air as aa
+
+warnings.filterwarnings("ignore")
+OUT = aa.ROOT / "results"
+CITIZEN_FILE = aa.RAW / "sensor_community_78340_pm25_hourly.csv"
+
+# Chart colours (colour-blind-safe palette, checked with a validator)
+INK, MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
+BLUE, ORANGE, AQUA, NEUTRAL = "#2a78d6", "#eb6834", "#1baf7a", "#a3a29c"
+
+
+def linear_model(train: pd.DataFrame):
+    """A simple comparison model: ridge regression on the same features, log target."""
+    pipe = make_pipeline(SimpleImputer(strategy="median"), StandardScaler(), RidgeCV(alphas=np.logspace(-2, 3, 20)))
+    pipe.fit(train[aa.FEATURES], np.log1p(train["y"]))
+    return lambda rows: np.expm1(pipe.predict(rows[aa.FEATURES]))
+
+
+def predict_all(fit_rows: pd.DataFrame, rows: pd.DataFrame) -> pd.DataFrame:
+    """Every method's forecast for `rows`, using models fitted on `fit_rows` only."""
+    model = aa.fit_model(fit_rows)
+    low, high = aa.fit_quantile_models(fit_rows)
+    out = pd.DataFrame({"target_day": rows["target_day"], "y": rows["y"]}, index=rows.index)
+    out["persistence"] = rows["persistence"]
+    out["seasonal"] = aa.climatology(fit_rows, rows)
+    out["cams"] = rows["cams"] if "cams" in rows else np.nan
+    out["linear"] = linear_model(fit_rows)(rows)
+    out["model"] = model.predict(rows[aa.FEATURES])
+    out["q10"], out["q90"] = low.predict(rows[aa.FEATURES]), high.predict(rows[aa.FEATURES])
+    return out
+
+
+def season_of(days: pd.Series) -> pd.Series:
+    return np.where(days.dt.month.isin([10, 11, 12, 1, 2, 3]), "heating season (Oct-Mar)", "warm season (Apr-Sep)")
+
+
+def summarise(pred: pd.DataFrame, thresholds: dict[str, float], methods: list[str]) -> dict:
+    """All headline numbers for one evaluation period."""
+    result = {"n_days": int(len(pred)), "bad_days": int((pred["y"] > aa.ALERT_LEVEL).sum()),
+              "first_day": str(pred["target_day"].min().date()), "last_day": str(pred["target_day"].max().date()),
+              "methods": {}}
+    base = aa.mae(pred["y"], pred["persistence"])
+    change = (pred["y"] > aa.ALERT_LEVEL) != (pred["persistence"] > aa.ALERT_LEVEL)
+    onset = change & (pred["y"] > aa.ALERT_LEVEL)
+    result["change_days"] = {"total": int(change.sum()), "smog_arrives": int(onset.sum()), "smog_clears": int((change & ~onset).sum())}
+    seasons = pd.Series(season_of(pred["target_day"]), index=pred.index)
+    for name in methods:
+        ok = pred[name].notna()
+        y, p = pred.loc[ok, "y"], pred.loc[ok, name]
+        entry = {"n": int(ok.sum()), "mae": aa.mae(y, p), "bias": float((p - y).mean()),
+                 "mae_gain_vs_persistence_pct": 100 * (1 - aa.mae(y, p) / aa.mae(y, pred.loc[ok, "persistence"]))}
+        entry["mae_by_season"] = {s: aa.mae(y[seasons[ok] == s], p[seasons[ok] == s]) for s in sorted(seasons.unique())}
+        entry["alerts_tuned"] = {"threshold": thresholds[name], **aa.alert_counts(y, p, thresholds[name])}
+        entry["alerts_at_35"] = aa.alert_counts(y, p, aa.ALERT_LEVEL)
+        right_side = (p > aa.ALERT_LEVEL) == (y > aa.ALERT_LEVEL)
+        entry["change_days_right_side"] = {"total": int(right_side[change[ok]].sum()),
+                                           "smog_arrives": int(right_side[onset[ok]].sum()),
+                                           "smog_clears": int(right_side[(change & ~onset)[ok]].sum())}
+        if name != "persistence":
+            low, high = aa.block_bootstrap_gain(y, p, pred.loc[ok, "persistence"])
+            entry["mae_gain_ci95"] = [low, high]
+        result["methods"][name] = entry
+    result["persistence_mae"] = base
+    if "q10" in pred:
+        result["band_10_90_coverage"] = float(((pred["y"] >= pred["q10"]) & (pred["y"] <= pred["q90"])).mean())
+        result["band_mean_width"] = float((pred["q90"] - pred["q10"]).mean())
+    return result
+
+
+# --------------------------------------------------------------------------- #
+# Figures
+# --------------------------------------------------------------------------- #
+def style(ax, title: str, subtitle: str = "") -> None:
+    ax.set_facecolor(SURFACE)
+    ax.figure.set_facecolor(SURFACE)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color(GRID)
+    ax.tick_params(colors=MUTED, labelsize=10, length=0)
+    ax.grid(axis="y", color=GRID, linewidth=0.8)
+    ax.set_axisbelow(True)
+    ax.set_title(title, loc="left", color=INK, fontsize=13, fontweight="bold", pad=22 if subtitle else 10)
+    if subtitle:
+        ax.text(0, 1.03, subtitle, transform=ax.transAxes, color=MUTED, fontsize=10, va="bottom")
+
+
+def fig_timeseries(pred: pd.DataFrame, path: Path) -> None:
+    part = pred[(pred["target_day"] >= "2024-11-01") & (pred["target_day"] <= "2025-02-28")]
+    fig, ax = plt.subplots(figsize=(11, 4.6), dpi=160)
+    days = part["target_day"]
+    ax.fill_between(days, part["q10"], part["q90"], color=BLUE, alpha=0.16, linewidth=0, label="Model's 10-90% range")
+    ax.plot(days, part["y"], color=INK, linewidth=2, label="Measured")
+    ax.plot(days, part["model"], color=BLUE, linewidth=2, label="Model forecast (made the evening before)")
+    ax.axhline(aa.ALERT_LEVEL, color=MUTED, linewidth=1, linestyle=(0, (4, 3)))
+    ax.text(1.005, aa.ALERT_LEVEL, "35 µg/m³\naction level", transform=ax.get_yaxis_transform(), color=MUTED, fontsize=9, va="center")
+    ax.set_ylabel("Daytime PM2.5, µg/m³", color=MUTED, fontsize=10)
+    ax.set_ylim(bottom=0)
+    ax.legend(loc="upper left", frameon=False, fontsize=10, labelcolor=INK)
+    style(ax, "Forecast vs. what was measured: winter 2024-25 (test period, never seen in training)",
+          "Each point is one day. The forecast for a day was made at 18:00 the day before.")
+    fig.autofmt_xdate(rotation=0, ha="center")
+    fig.tight_layout()
+    fig.savefig(path)
+    plt.close(fig)
+
+
+def fig_mae(summary: dict, path: Path) -> None:
+    names = [("persistence", "Tomorrow = today\n(persistence)"), ("seasonal", "Average for\nthe month"),
+             ("cams", "Global model\n(CAMS)"), ("linear", "Linear model"), ("model", "Our model\n(boosted trees)")]
+    values = [summary["methods"][k]["mae"] for k, _ in names]
+    fig, ax = plt.subplots(figsize=(8.4, 4.4), dpi=160)
+    bars = ax.bar([label for _, label in names], values, width=0.58, color=[NEUTRAL] * 4 + [BLUE])
+    for bar, value in zip(bars, values):
+        ax.text(bar.get_x() + bar.get_width() / 2, value + 0.25, f"{value:.1f}", ha="center", color=INK, fontsize=11)
+    ax.set_ylabel("Mean absolute error, µg/m³ (lower is better)", color=MUTED, fontsize=10)
+    ax.set_ylim(0, max(values) * 1.15)
+    style(ax, f"Average miss on {summary['n_days']} test days", "Forecast of tomorrow's daytime PM2.5, Oct 2024 - Nov 2025")
+    fig.tight_layout()
+    fig.savefig(path)
+    plt.close(fig)
+
+
+def fig_alerts(summary: dict, path: Path) -> None:
+    names = [("persistence", "Tomorrow = today"), ("cams", "Global model (CAMS)"), ("model", "Our model")]
+    missed = [summary["methods"][k]["alerts_tuned"]["missed"] for k, _ in names]
+    false = [summary["methods"][k]["alerts_tuned"]["false_alarms"] for k, _ in names]
+    x = np.arange(len(names))
+    fig, ax = plt.subplots(figsize=(8.4, 4.4), dpi=160)
+    b1 = ax.bar(x - 0.2, missed, width=0.36, color=BLUE, label="Smog days missed (no warning given)")
+    b2 = ax.bar(x + 0.2, false, width=0.36, color=ORANGE, label="False alarms (warning on a clean day)")
+    for bars in (b1, b2):
+        for bar in bars:
+            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.6, f"{int(bar.get_height())}", ha="center", color=INK, fontsize=11)
+    ax.set_xticks(x, [label for _, label in names])
+    ax.set_ylabel("Days (lower is better)", color=MUTED, fontsize=10)
+    ax.set_ylim(0, max(missed + false) * 1.25)
+    ax.legend(loc="upper right", frameon=False, fontsize=10, labelcolor=INK)
+    style(ax, f"Warning mistakes on the test period ({summary['bad_days']} smog days out of {summary['n_days']})",
+          "Each method uses the warning threshold chosen for it on validation data (a miss counts 3x a false alarm)")
+    fig.tight_layout()
+    fig.savefig(path)
+    plt.close(fig)
+
+
+# --------------------------------------------------------------------------- #
+def markdown_report(valid: dict, test: dict, worst: pd.DataFrame, importance: pd.Series, citizen: dict | None, ablation: dict) -> str:
+    label = {"persistence": "Tomorrow = today (persistence)", "seasonal": "Average for the month", "cams": "Global model (CAMS)",
+             "linear": "Linear model (ridge)", "model": "**Our model (boosted trees)**"}
+    lines = ["# Results (generated by `src/run_experiment.py`)", ""]
+    for title, s in (("Validation (used to choose settings)", valid), ("Test (evaluated once, after settings were frozen)", test)):
+        lines += [f"## {title}: {s['first_day']} .. {s['last_day']}, {s['n_days']} days, {s['bad_days']} smog days (> 35 µg/m³)", "",
+                  "| Method | MAE, µg/m³ | vs persistence | Heating season MAE | Warm season MAE | Smog days caught | Missed | False alarms |",
+                  "|---|---|---|---|---|---|---|---|"]
+        for name, m in s["methods"].items():
+            a = m["alerts_tuned"]
+            seasons = list(m["mae_by_season"].values())
+            gain = "-" if name == "persistence" else f"{m['mae_gain_vs_persistence_pct']:+.0f}%"
+            lines.append(f"| {label[name]} | {m['mae']:.1f} | {gain} | {seasons[0]:.1f} | {seasons[1]:.1f} | "
+                         f"{a['caught']} / {a['bad_days']} | {a['missed']} | {a['false_alarms']} |")
+        lines.append("")
+    lines += ["## Which inputs matter (validation only, MAE in µg/m³)", "", "| Inputs given to the model | Validation MAE |", "|---|---|",
+              f"| none: tomorrow = today | {valid['persistence_mae']:.1f} |"]
+    lines += [f"| {k} | {v:.1f} |" for k, v in ablation.items()] + [""]
+    lines += ["## Warnings with the plain rule 'warn if the forecast is above 35' (test)", "",
+              "| Method | Smog days caught | Missed | False alarms |", "|---|---|---|---|"]
+    for name, mm in test["methods"].items():
+        a = mm["alerts_at_35"]
+        lines.append(f"| {label[name]} | {a['caught']} / {a['bad_days']} | {a['missed']} | {a['false_alarms']} |")
+    lines.append("")
+    m = test["methods"]["model"]
+    c = test["change_days"]
+    lines += [f"95% interval for the model's MAE gain over persistence on test: {m['mae_gain_ci95'][0]:.1f} .. {m['mae_gain_ci95'][1]:.1f} µg/m³ "
+              "(bootstrap over weeks).", "",
+              f"Days when the air crossed the 35 µg/m³ line between today and tomorrow: {c['total']} "
+              f"({c['smog_arrives']} smog arrives, {c['smog_clears']} smog clears). Persistence is wrong on all of them by construction; "
+              f"the model's forecast was on the correct side on {m['change_days_right_side']['total']} "
+              f"({m['change_days_right_side']['smog_arrives']} arrivals, {m['change_days_right_side']['smog_clears']} clearings).", "",
+              f"Model's 10-90% range contained the measured value on {100 * test['band_10_90_coverage']:.0f}% of test days (target 80%).", "",
+              "## Largest misses on the test period", "", worst.to_markdown(index=False), "",
+              "## What the model relies on (drop in accuracy when one input is shuffled, test period)", "",
+              importance.round(2).to_frame("MAE increase, µg/m³").to_markdown(), ""]
+    if citizen:
+        lines += [f"## Extra test: citizen sensor, {citizen['first_day']} .. {citizen['last_day']}, {citizen['n_days']} days", "",
+                  "| Method | MAE, µg/m³ | Smog days caught | Missed | False alarms |", "|---|---|---|---|---|"]
+        for name, cm in citizen["methods"].items():
+            a = cm["alerts_tuned"]
+            lines.append(f"| {label[name]} | {cm['mae']:.1f} | {a['caught']} / {a['bad_days']} | {a['missed']} | {a['false_alarms']} |")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def main() -> None:
+    OUT.mkdir(exist_ok=True)
+    pm = aa.load_pm(aa.RAW / "openaq_almaty_8876_pm25_hourly.csv")
+    metar, cams = aa.load_metar(), aa.load_cams()
+    table = aa.build_table(pm, metar, cams)
+    parts = aa.split(table)
+    train, valid, test = parts["train"], parts["valid"], parts["test"]
+    methods = ["persistence", "seasonal", "cams", "linear", "model"]
+
+    # 1) validation: models fitted on train only; alert thresholds are chosen here
+    pred_valid = predict_all(train, valid)
+    thresholds = {name: aa.tune_threshold(pred_valid["y"][pred_valid[name].notna()], pred_valid[name].dropna()) for name in methods}
+    summary_valid = summarise(pred_valid, thresholds, methods)
+
+    # 1b) ablation on validation only: what do the weather inputs add?
+    ablation = {}
+    for label, feats in (("PM2.5 history + calendar", aa.PM_FEATURES + aa.CALENDAR_FEATURES),
+                         ("Weather + calendar (no PM2.5 sensor at all)", aa.WEATHER_FEATURES + aa.CALENDAR_FEATURES),
+                         ("All inputs (final)", aa.FEATURES)):
+        ablation[label] = aa.mae(valid["y"], aa.fit_model(train, feats).predict(valid[feats]))
+
+    # 2) test: models refitted on train+validation, evaluated once
+    fit_rows = pd.concat([train, valid])
+    pred_test = predict_all(fit_rows, test)
+    summary_test = summarise(pred_test, thresholds, methods)
+
+    # 3) error analysis: largest misses, with what the weather did on the target day (not a model input)
+    next_wind = aa.daytime(metar["wind"]).shift(-1).reindex(pred_test.index)
+    next_precip = aa.daytime(metar["precip"]).shift(-1).reindex(pred_test.index)
+    worst = pred_test.assign(error=pred_test["model"] - pred_test["y"], wind_today=test["wind_day"], wind_target_day=next_wind,
+                             precip_target_day=next_precip)
+    worst = worst.reindex(worst["error"].abs().sort_values(ascending=False).index).head(8)
+    worst_table = pd.DataFrame({
+        "Target day": worst["target_day"].dt.strftime("%Y-%m-%d"), "Today": worst["persistence"].round(0),
+        "Forecast": worst["model"].round(0), "Measured": worst["y"].round(0), "Error": worst["error"].round(0),
+        "Wind today, m/s": worst["wind_today"].round(1), "Wind on target day, m/s": worst["wind_target_day"].round(1),
+        "Rain/snow on target day": np.where(worst["precip_target_day"] > 0, "yes", "no")})
+
+    final_model = aa.fit_model(fit_rows)
+    perm = permutation_importance(final_model, test[aa.FEATURES], test["y"], scoring="neg_mean_absolute_error", n_repeats=20, random_state=0)
+    importance = pd.Series(perm.importances_mean, index=aa.FEATURES).sort_values(ascending=False).head(8)
+
+    # 4) optional extra test: a different, low-cost sensor in 2026 (nothing is tuned on it)
+    summary_citizen = None
+    if CITIZEN_FILE.exists() and sum(1 for _ in CITIZEN_FILE.open()) > 24 * 30:
+        citizen_table = aa.build_table(aa.load_pm(CITIZEN_FILE, stamp="start"), metar, cams)
+        rows = citizen_table[citizen_table["y"].notna() & citizen_table["persistence"].notna()]
+        usable = table[table["y"].notna() & table["persistence"].notna()]       # all reference-monitor days
+        pred_citizen = predict_all(usable, rows)
+        summary_citizen = summarise(pred_citizen, thresholds, methods)
+        pred_citizen.round(2).to_csv(OUT / "citizen_2026_predictions.csv", index=False)
+
+    # 5) save everything
+    pred_test.round(2).to_csv(OUT / "test_predictions.csv", index=False)
+    pred_valid.round(2).to_csv(OUT / "validation_predictions.csv", index=False)
+    worst_table.to_csv(OUT / "worst_misses.csv", index=False)
+    metrics = {"split": {k: {"n_days": int(len(v)), "first": str(v["target_day"].min().date()), "last": str(v["target_day"].max().date())}
+                         for k, v in parts.items()},
+               "alert_level": aa.ALERT_LEVEL, "alert_thresholds_chosen_on_validation": thresholds, "model_params": aa.MODEL_PARAMS,
+               "n_features": len(aa.FEATURES), "validation": summary_valid, "test": summary_test, "citizen_2026": summary_citizen,
+               "feature_importance_test": importance.round(3).to_dict(),
+               "ablation_validation_mae": ablation}
+    (OUT / "metrics.json").write_text(json.dumps(metrics, indent=2))
+    (OUT / "RESULTS.md").write_text(markdown_report(summary_valid, summary_test, worst_table, importance, summary_citizen, ablation))
+    fig_timeseries(pred_test, OUT / "fig_forecast_vs_measured.png")
+    fig_mae(summary_test, OUT / "fig_mae_by_method.png")
+    fig_alerts(summary_test, OUT / "fig_alert_mistakes.png")
+    print((OUT / "RESULTS.md").read_text())
+
+
+if __name__ == "__main__":
+    main()
