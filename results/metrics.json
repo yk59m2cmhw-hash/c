@@ -1,495 +1,262 @@
 {
-  "split": {
-    "train": {
-      "n_days": 598,
-      "first": "2020-04-11",
-      "last": "2023-09-24"
-    },
-    "valid": {
-      "n_days": 352,
-      "first": "2023-10-01",
-      "last": "2024-09-29"
-    },
-    "test": {
-      "n_days": 398,
-      "first": "2024-10-11",
-      "last": "2025-11-14"
-    }
+ "test_period": [
+  "2024-10-11",
+  "2025-11-13"
+ ],
+ "test_days": 396,
+ "test_days_oct_mar": 216,
+ "train_days_final_model": 886,
+ "mae": {
+  "Persistence (last 24 h at 18:00)": {
+   "MAE Oct-Mar": 17.0,
+   "MAE all days": 10.93
   },
-  "alert_level": 35.0,
-  "alert_thresholds_chosen_on_validation": {
-    "persistence": 23.0,
-    "seasonal": 26.5,
-    "cams": 18.5,
-    "linear": 29.0,
-    "model": 29.0
+  "Persistence (full calendar day, knows 6 h more)": {
+   "MAE Oct-Mar": 15.31,
+   "MAE all days": 9.91
   },
-  "alert_thresholds_retuned_in_this_environment": {
-    "persistence": 23.0,
-    "seasonal": 26.5,
-    "cams": 18.5,
-    "linear": 29.0,
-    "model": 29.0
+  "Typical value for the month": {
+   "MAE Oct-Mar": 18.52,
+   "MAE all days": 11.68
   },
-  "false_alarms_at_matched_misses_test": {
-    "persistence": {
-      "5": 122,
-      "8": 87,
-      "11": 76,
-      "16": 59,
-      "20": 50,
-      "30": 38
-    },
-    "cams": {
-      "5": 121,
-      "8": 86,
-      "11": 70,
-      "16": 47,
-      "20": 38,
-      "30": 33
-    },
-    "model": {
-      "5": 80,
-      "8": 70,
-      "11": 67,
-      "16": 50,
-      "20": 47,
-      "30": 27
-    }
-  },
-  "library_versions": {
-    "scikit-learn": "1.9.1",
-    "pandas": "3.0.5",
-    "numpy": "2.5.3"
-  },
-  "model_params": {
-    "loss": "absolute_error",
-    "learning_rate": 0.05,
-    "max_iter": 300,
-    "max_depth": 2,
-    "min_samples_leaf": 20,
-    "l2_regularization": 1.0,
-    "random_state": 0
-  },
-  "n_features": 30,
-  "validation": {
-    "n_days": 352,
-    "bad_days": 86,
-    "first_day": "2023-10-01",
-    "last_day": "2024-09-29",
-    "methods": {
-      "persistence": {
-        "n": 352,
-        "mae": 15.12761994949495,
-        "bias": -0.30643939393939384,
-        "mae_gain_vs_persistence_pct": 0.0,
-        "mae_by_season": {
-          "heating season (Oct-Mar)": 25.862941554271032,
-          "warm season (Apr-Sep)": 4.7521415270018625
-        },
-        "alerts_tuned": {
-          "threshold": 23.0,
-          "bad_days": 86,
-          "caught": 70,
-          "missed": 16,
-          "false_alarms": 51,
-          "correct_quiet": 215,
-          "recall": 0.813953488372093,
-          "precision": 0.5785123966942148
-        },
-        "alerts_at_35": {
-          "bad_days": 86,
-          "caught": 54,
-          "missed": 32,
-          "false_alarms": 30,
-          "correct_quiet": 236,
-          "recall": 0.627906976744186,
-          "precision": 0.6428571428571429
-        },
-        "change_days_right_side": {
-          "total": 0,
-          "smog_arrives": 0,
-          "smog_clears": 0
-        }
-      },
-      "seasonal": {
-        "n": 352,
-        "mae": 15.973309762334736,
-        "bias": 9.015853285401706,
-        "mae_gain_vs_persistence_pct": -5.5903692429027485,
-        "mae_by_season": {
-          "heating season (Oct-Mar)": 28.251228424103104,
-          "warm season (Apr-Sep)": 4.106941446770898
-        },
-        "alerts_tuned": {
-          "threshold": 26.5,
-          "bad_days": 86,
-          "caught": 82,
-          "missed": 4,
-          "false_alarms": 60,
-          "correct_quiet": 206,
-          "recall": 0.9534883720930233,
-          "precision": 0.5774647887323944
-        },
-        "alerts_at_35": {
-          "bad_days": 86,
-          "caught": 69,
-          "missed": 17,
-          "false_alarms": 42,
-          "correct_quiet": 224,
-          "recall": 0.8023255813953488,
-          "precision": 0.6216216216216216
-        },
-        "change_days_right_side": {
-          "total": 33,
-          "smog_arrives": 24,
-          "smog_clears": 9
-        },
-        "mae_gain_ci95": [
-          -3.3969739897518307,
-          1.4853620079720595
-        ]
-      },
-      "cams": {
-        "n": 352,
-        "mae": 15.3721875,
-        "bias": -11.642515782828282,
-        "mae_gain_vs_persistence_pct": -1.6166954968565017,
-        "mae_by_season": {
-          "heating season (Oct-Mar)": 26.985491329479768,
-          "warm season (Apr-Sep)": 4.148156424581005
-        },
-        "alerts_tuned": {
-          "threshold": 18.5,
-          "bad_days": 86,
-          "caught": 73,
-          "missed": 13,
-          "false_alarms": 61,
-          "correct_quiet": 205,
-          "recall": 0.8488372093023255,
-          "precision": 0.5447761194029851
-        },
-        "alerts_at_35": {
-          "bad_days": 86,
-          "caught": 3,
-          "missed": 83,
-          "false_alarms": 0,
-          "correct_quiet": 266,
-          "recall": 0.03488372093023256,
-          "precision": 1.0
-        },
-        "change_days_right_side": {
-          "total": 31,
-          "smog_arrives": 1,
-          "smog_clears": 30
-        },
-        "mae_gain_ci95": [
-          -2.440102214189011,
-          1.8711268150252507
-        ]
-      },
-      "linear": {
-        "n": 352,
-        "mae": 11.489624078622633,
-        "bias": -2.689853671197886,
-        "mae_gain_vs_persistence_pct": 24.048699551007523,
-        "mae_by_season": {
-          "heating season (Oct-Mar)": 19.144703450033628,
-          "warm season (Apr-Sep)": 4.091139546476813
-        },
-        "alerts_tuned": {
-          "threshold": 29.0,
-          "bad_days": 86,
-          "caught": 79,
-          "missed": 7,
-          "false_alarms": 38,
-          "correct_quiet": 228,
-          "recall": 0.9186046511627907,
-          "precision": 0.6752136752136753
-        },
-        "alerts_at_35": {
-          "bad_days": 86,
-          "caught": 71,
-          "missed": 15,
-          "false_alarms": 26,
-          "correct_quiet": 240,
-          "recall": 0.8255813953488372,
-          "precision": 0.7319587628865979
-        },
-        "change_days_right_side": {
-          "total": 29,
-          "smog_arrives": 19,
-          "smog_clears": 10
-        },
-        "mae_gain_ci95": [
-          2.260382722402493,
-          5.160686196518405
-        ]
-      },
-      "model": {
-        "n": 352,
-        "mae": 11.106417932364677,
-        "bias": 0.11186424295833981,
-        "mae_gain_vs_persistence_pct": 26.581855113728746,
-        "mae_by_season": {
-          "heating season (Oct-Mar)": 18.558227955142154,
-          "warm season (Apr-Sep)": 3.9043892511328093
-        },
-        "alerts_tuned": {
-          "threshold": 29.0,
-          "bad_days": 86,
-          "caught": 81,
-          "missed": 5,
-          "false_alarms": 41,
-          "correct_quiet": 225,
-          "recall": 0.9418604651162791,
-          "precision": 0.6639344262295082
-        },
-        "alerts_at_35": {
-          "bad_days": 86,
-          "caught": 73,
-          "missed": 13,
-          "false_alarms": 29,
-          "correct_quiet": 237,
-          "recall": 0.8488372093023255,
-          "precision": 0.7156862745098039
-        },
-        "change_days_right_side": {
-          "total": 29,
-          "smog_arrives": 20,
-          "smog_clears": 9
-        },
-        "mae_gain_ci95": [
-          2.464814046510617,
-          5.6962794869778355
-        ]
-      }
-    },
-    "change_days": {
-      "total": 62,
-      "smog_arrives": 32,
-      "smog_clears": 30
-    },
-    "persistence_mae": 15.12761994949495,
-    "band_10_90_coverage": 0.7414772727272727,
-    "band_mean_width": 31.373326363919272
-  },
-  "test": {
-    "n_days": 398,
-    "bad_days": 119,
-    "first_day": "2024-10-11",
-    "last_day": "2025-11-14",
-    "methods": {
-      "persistence": {
-        "n": 398,
-        "mae": 15.289983648400732,
-        "bias": -0.008506819813352424,
-        "mae_gain_vs_persistence_pct": 0.0,
-        "mae_by_season": {
-          "heating season (Oct-Mar)": 23.775843025382198,
-          "warm season (Apr-Sep)": 5.116329036218539
-        },
-        "alerts_tuned": {
-          "threshold": 23.0,
-          "bad_days": 119,
-          "caught": 108,
-          "missed": 11,
-          "false_alarms": 76,
-          "correct_quiet": 203,
-          "recall": 0.907563025210084,
-          "precision": 0.5869565217391305
-        },
-        "alerts_at_35": {
-          "bad_days": 119,
-          "caught": 84,
-          "missed": 35,
-          "false_alarms": 34,
-          "correct_quiet": 245,
-          "recall": 0.7058823529411765,
-          "precision": 0.711864406779661
-        },
-        "change_days_right_side": {
-          "total": 0,
-          "smog_arrives": 0,
-          "smog_clears": 0
-        }
-      },
-      "seasonal": {
-        "n": 398,
-        "mae": 15.593555822558494,
-        "bias": -0.12464759693904141,
-        "mae_gain_vs_persistence_pct": -1.9854316468776334,
-        "mae_by_season": {
-          "heating season (Oct-Mar)": 24.992786105136595,
-          "warm season (Apr-Sep)": 4.324865373279781
-        },
-        "alerts_tuned": {
-          "threshold": 26.5,
-          "bad_days": 119,
-          "caught": 103,
-          "missed": 16,
-          "false_alarms": 62,
-          "correct_quiet": 217,
-          "recall": 0.865546218487395,
-          "precision": 0.6242424242424243
-        },
-        "alerts_at_35": {
-          "bad_days": 119,
-          "caught": 91,
-          "missed": 28,
-          "false_alarms": 43,
-          "correct_quiet": 236,
-          "recall": 0.7647058823529411,
-          "precision": 0.6791044776119403
-        },
-        "change_days_right_side": {
-          "total": 35,
-          "smog_arrives": 20,
-          "smog_clears": 15
-        },
-        "mae_gain_ci95": [
-          -2.023396093525417,
-          1.330410063988612
-        ]
-      },
-      "cams": {
-        "n": 398,
-        "mae": 16.60781586503948,
-        "bias": -13.634616535056233,
-        "mae_gain_vs_persistence_pct": -8.618924957297702,
-        "mae_by_season": {
-          "heating season (Oct-Mar)": 27.1319131738717,
-          "warm season (Apr-Sep)": 3.990527931246164
-        },
-        "alerts_tuned": {
-          "threshold": 18.5,
-          "bad_days": 119,
-          "caught": 110,
-          "missed": 9,
-          "false_alarms": 83,
-          "correct_quiet": 196,
-          "recall": 0.9243697478991597,
-          "precision": 0.5699481865284974
-        },
-        "alerts_at_35": {
-          "bad_days": 119,
-          "caught": 47,
-          "missed": 72,
-          "false_alarms": 8,
-          "correct_quiet": 271,
-          "recall": 0.3949579831932773,
-          "precision": 0.8545454545454545
-        },
-        "change_days_right_side": {
-          "total": 36,
-          "smog_arrives": 7,
-          "smog_clears": 29
-        },
-        "mae_gain_ci95": [
-          -3.8805430407572525,
-          0.9907388585051388
-        ]
-      },
-      "linear": {
-        "n": 398,
-        "mae": 13.110213757299935,
-        "bias": -4.883682655205056,
-        "mae_gain_vs_persistence_pct": 14.256195043928589,
-        "mae_by_season": {
-          "heating season (Oct-Mar)": 20.314548855109518,
-          "warm season (Apr-Sep)": 4.472972231196734
-        },
-        "alerts_tuned": {
-          "threshold": 29.0,
-          "bad_days": 119,
-          "caught": 98,
-          "missed": 21,
-          "false_alarms": 45,
-          "correct_quiet": 234,
-          "recall": 0.8235294117647058,
-          "precision": 0.6853146853146853
-        },
-        "alerts_at_35": {
-          "bad_days": 119,
-          "caught": 86,
-          "missed": 33,
-          "false_alarms": 21,
-          "correct_quiet": 258,
-          "recall": 0.7226890756302521,
-          "precision": 0.8037383177570093
-        },
-        "change_days_right_side": {
-          "total": 39,
-          "smog_arrives": 16,
-          "smog_clears": 23
-        },
-        "mae_gain_ci95": [
-          0.8810458388705728,
-          3.56386241386544
-        ]
-      },
-      "model": {
-        "n": 398,
-        "mae": 12.266992185365742,
-        "bias": -1.9136909539102764,
-        "mae_gain_vs_persistence_pct": 19.771057527266755,
-        "mae_by_season": {
-          "heating season (Oct-Mar)": 19.365530812668116,
-          "warm season (Apr-Sep)": 3.7565895216938374
-        },
-        "alerts_tuned": {
-          "threshold": 29.0,
-          "bad_days": 119,
-          "caught": 103,
-          "missed": 16,
-          "false_alarms": 52,
-          "correct_quiet": 227,
-          "recall": 0.865546218487395,
-          "precision": 0.6645161290322581
-        },
-        "alerts_at_35": {
-          "bad_days": 119,
-          "caught": 90,
-          "missed": 29,
-          "false_alarms": 34,
-          "correct_quiet": 245,
-          "recall": 0.7563025210084033,
-          "precision": 0.7258064516129032
-        },
-        "change_days_right_side": {
-          "total": 36,
-          "smog_arrives": 19,
-          "smog_clears": 17
-        },
-        "mae_gain_ci95": [
-          1.6813087188693279,
-          4.499393977284296
-        ]
-      }
-    },
-    "change_days": {
-      "total": 69,
-      "smog_arrives": 35,
-      "smog_clears": 34
-    },
-    "persistence_mae": 15.289983648400732,
-    "band_10_90_coverage": 0.7864321608040201,
-    "band_mean_width": 34.93575692684882
-  },
-  "citizen_2026": null,
-  "feature_importance_test": {
-    "season_cos": 1.939,
-    "pm_24h": 1.011,
-    "temp_min24h": 0.853,
-    "temp_day": 0.811,
-    "pressure_day": 0.658,
-    "pm_evening": 0.607,
-    "pm_week": 0.37,
-    "wind_u": 0.273
-  },
-  "ablation_validation_mae": {
-    "PM2.5 history + calendar": 12.690099332041031,
-    "Weather + calendar (no PM2.5 sensor at all)": 11.878867497070564,
-    "All inputs (final)": 11.106417932364677
+  "Our model (Ridge, air history + weather)": {
+   "MAE Oct-Mar": 12.15,
+   "MAE all days": 8.21
   }
+ },
+ "gain_vs_persistence_oct_mar": {
+  "mean": 4.85,
+  "ci95": [
+   3.0,
+   6.95
+  ]
+ },
+ "gain_vs_calendar_persistence_oct_mar": {
+  "mean": 3.15,
+  "ci95": [
+   1.36,
+   5.23
+  ]
+ },
+ "alerts_oct_mar": {
+  "Our model": {
+   "bad days": 88,
+   "caught": 72,
+   "missed": 16,
+   "false alarms": 22,
+   "correctly quiet": 106,
+   "recall": 0.82,
+   "precision": 0.77
+  },
+  "Persistence (last 24 h at 18:00)": {
+   "bad days": 88,
+   "caught": 69,
+   "missed": 19,
+   "false alarms": 40,
+   "correctly quiet": 88,
+   "recall": 0.78,
+   "precision": 0.63
+  },
+  "Persistence, simple rule (warn if last 24 h > 35.4)": {
+   "bad days": 88,
+   "caught": 57,
+   "missed": 31,
+   "false alarms": 28,
+   "correctly quiet": 100,
+   "recall": 0.65,
+   "precision": 0.67
+  }
+ },
+ "cutoffs": {
+  "model": 32.5,
+  "persistence": 29.5
+ },
+ "by_kind_of_day": {
+  "1. smog starts (clean -> bad)": {
+   "days": 31,
+   "model_warned": 17,
+   "persistence_warned": 12,
+   "model_error": 15.41,
+   "persistence_error": 25.12
+  },
+  "2. smog continues (bad -> bad)": {
+   "days": 57,
+   "model_warned": 55,
+   "persistence_warned": 57,
+   "model_error": 19.99,
+   "persistence_error": 21.23
+  },
+  "3. air clears (bad -> clean)": {
+   "days": 28,
+   "model_warned": 13,
+   "persistence_warned": 28,
+   "model_error": 13.11,
+   "persistence_error": 33.13
+  },
+  "4. stays clean (clean -> clean)": {
+   "days": 100,
+   "model_warned": 9,
+   "persistence_warned": 12,
+   "model_error": 6.41,
+   "persistence_error": 7.56
+  }
+ },
+ "range_coverage": {
+  "oct_mar": 0.759,
+  "all_days": 0.74
+ },
+ "likely_range_log": {
+  "heating": [
+   -0.6273956452962057,
+   0.3325744610693598
+  ],
+  "warm": [
+   -0.3878801729359562,
+   0.27264829717465333
+  ]
+ },
+ "real_forecast_check": {
+  "the weather record (as if the forecast were perfect)": {
+   "Oct-Mar days": 216,
+   "MAE Oct-Mar": 12.15,
+   "MAE all days": 8.21,
+   "missed": 16,
+   "false alarms": 22
+  },
+  "a real forecast, 1 day old": {
+   "Oct-Mar days": 216,
+   "MAE Oct-Mar": 12.15,
+   "MAE all days": 8.27,
+   "missed": 18,
+   "false alarms": 22
+  },
+  "a real forecast, 2 days old": {
+   "Oct-Mar days": 216,
+   "MAE Oct-Mar": 12.06,
+   "MAE all days": 8.2,
+   "missed": 16,
+   "false alarms": 21
+  },
+  "(baseline) persistence, needs no weather": {
+   "Oct-Mar days": 216,
+   "MAE Oct-Mar": 17.0,
+   "MAE all days": 10.93,
+   "missed": 19,
+   "false alarms": 40
+  }
+ },
+ "model_selection_past_winters": {
+  "Persistence (last 24 h at 18:00)": {
+   "MAE winter 2022/23": 24.16,
+   "MAE winter 2023/24": 18.12,
+   "average": 21.14,
+   "vs persistence": "+0%"
+  },
+  "Ridge | A: air history only": {
+   "MAE winter 2022/23": 20.94,
+   "MAE winter 2023/24": 14.78,
+   "average": 17.86,
+   "vs persistence": "-16%"
+  },
+  "Ridge | B: + city weather tomorrow": {
+   "MAE winter 2022/23": 14.72,
+   "MAE winter 2023/24": 12.66,
+   "average": 13.69,
+   "vs persistence": "-35%"
+  },
+  "Ridge | C: + inversion signal": {
+   "MAE winter 2022/23": 14.25,
+   "MAE winter 2023/24": 14.54,
+   "average": 14.4,
+   "vs persistence": "-32%"
+  },
+  "Boosting | B: + city weather tomorrow": {
+   "MAE winter 2022/23": 15.35,
+   "MAE winter 2023/24": 12.17,
+   "average": 13.76,
+   "vs persistence": "-35%"
+  },
+  "Boosting | C: + inversion signal": {
+   "MAE winter 2022/23": 14.93,
+   "MAE winter 2023/24": 12.71,
+   "average": 13.82,
+   "vs persistence": "-35%"
+  }
+ },
+ "timetable_validation": {
+  "1": {
+   "weeks": 22,
+   "fixed timetable": 35.17,
+   "rule + persistence": 37.6,
+   "rule + our forecast": 29.33,
+   "perfect hindsight": 17.17,
+   "avoidable dirt removed (persistence)": "-14%",
+   "avoidable dirt removed (our forecast)": "32%"
+  },
+  "2": {
+   "weeks": 22,
+   "fixed timetable": 35.17,
+   "rule + persistence": 33.69,
+   "rule + our forecast": 32.54,
+   "perfect hindsight": 22.11,
+   "avoidable dirt removed (persistence)": "11%",
+   "avoidable dirt removed (our forecast)": "20%"
+  },
+  "3": {
+   "weeks": 22,
+   "fixed timetable": 35.17,
+   "rule + persistence": 34.74,
+   "rule + our forecast": 33.34,
+   "perfect hindsight": 25.58,
+   "avoidable dirt removed (persistence)": "4%",
+   "avoidable dirt removed (our forecast)": "19%"
+  }
+ },
+ "timetable_test": {
+  "1": {
+   "weeks": 29,
+   "fixed timetable": 39.98,
+   "rule + persistence": 34.11,
+   "rule + our forecast": 32.57,
+   "perfect hindsight": 22.33,
+   "avoidable dirt removed (persistence)": "33%",
+   "avoidable dirt removed (our forecast)": "42%"
+  },
+  "2": {
+   "weeks": 29,
+   "fixed timetable": 39.98,
+   "rule + persistence": 37.5,
+   "rule + our forecast": 35.4,
+   "perfect hindsight": 26.71,
+   "avoidable dirt removed (persistence)": "19%",
+   "avoidable dirt removed (our forecast)": "35%"
+  },
+  "3": {
+   "weeks": 29,
+   "fixed timetable": 39.98,
+   "rule + persistence": 38.83,
+   "rule + our forecast": 37.7,
+   "perfect hindsight": 31.12,
+   "avoidable dirt removed (persistence)": "13%",
+   "avoidable dirt removed (our forecast)": "26%"
+  }
+ },
+ "timetable_test_quota2": {
+  "weeks": 29,
+  "cleaner_than_fixed": 4.58,
+  "ci95_vs_fixed": [
+   0.79,
+   8.82
+  ],
+  "cleaner_than_persistence_planner": 2.09,
+  "ci95_vs_persistence": [
+   -1.32,
+   5.86
+  ],
+  "weeks_better_tied_worse": [
+   17,
+   0,
+   12
+  ]
+ }
 }

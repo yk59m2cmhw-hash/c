@@ -1,6 +1,6 @@
-scikit-learn==1.9.1   # the reported numbers were produced with this version; others build slightly different trees
-pandas>=2.2
+pandas
 numpy
-matplotlib>=3.5
-tabulate
-gradio>=4.0
+scikit-learn
+matplotlib
+requests
+gradio  # optional: only for the demo page (RUN_APP = True in the notebook)
