@@ -2,16 +2,16 @@
 
 **Track:** AI + Climate · **Team:** solo participant (name on the submission form)
 
-**In one sentence:** on 216 winter days the model never saw, the forecast missed by 12.2 µg/m³ on average, against 17.0 for "tomorrow will be like today", and it raised 22 false alarms instead of 40. On a different sensor in 2026 it lost to the same baseline, and that is reported below too.
+**Main result.** On 216 winter days the model never saw, its forecast was off by 12.2 µg/m³ on average, against 17.0 for "tomorrow will be like today", with 22 false alarms instead of 40. On a different sensor in 2026 it lost to that baseline; this is reported below.
 
-**Try it:** [`demo.html`](demo.html) is one file; download it and open it, and the model runs in your browser. ·
-[Notebook with saved outputs](almaty_smog_tomorrow.ipynb) ·
-[open in Google Colab](https://colab.research.google.com/github/yk59m2cmhw-hash/c/blob/claude/keen-bohr-rsb2xk/almaty_smog_tomorrow.ipynb) ·
-every number below is saved in [`results/metrics.json`](results/metrics.json)
+**Try it:** [`demo.html`](demo.html) (one file: download it, open it, and the model runs in your browser) ·
+[notebook with saved outputs](almaty_smog_tomorrow.ipynb) ·
+[open in Colab](https://colab.research.google.com/github/yk59m2cmhw-hash/c/blob/claude/keen-bohr-rsb2xk/almaty_smog_tomorrow.ipynb) ·
+all numbers: [`results/metrics.json`](results/metrics.json)
 
 ## The problem
 
-Almaty lies in a basin under the mountains, and in winter polluted air gets trapped over the city. In the test data the air was "unhealthy for sensitive groups" or worse on 88 of 216 October–March days. A PE teacher has to decide the evening before whether tomorrow's lesson can be outdoors. The usual guess, "tomorrow will be like today", fails exactly when it matters: on the first day of a smog episode and on the first clean day after one.
+Almaty lies in a basin under the mountains, and in winter polluted air gets trapped over the city: in the test data the air was "unhealthy for sensitive groups" or worse on 88 of 216 October–March days. A PE teacher decides the evening before whether tomorrow's lesson can be outdoors. The usual guess, "tomorrow will be like today", fails on the first day of a smog episode and on the first clean day after one.
 
 ## What we built
 
@@ -20,24 +20,24 @@ Almaty lies in a basin under the mountains, and in winter polluted air gets trap
 
 ![The message for one held-out evening, from the demo page](results/figures/06_demo_message.png)
 
-*A replay of 14 November 2024, an evening from the test period. The air that day was clean (15 µg/m³), so "tomorrow = today" gave no warning. The model warned. The next day measured 54 (black diamond).*
+*Replay of 14 November 2024, from the test period. That day's air was clean (15 µg/m³), so "tomorrow = today" gave no warning. The model warned; the next day measured 54 (black diamond).*
 
 ## What we added
 
-Starting point: suggested project 4.3.2, Next-day air quality forecast. Added to it:
+Starting point: suggested project 4.3.2, Next-day air quality forecast. Added:
 
-1. **A real clock.** The forecast is made at 18:00 from readings that existed then, and the baseline gets the same information.
-2. **The days that matter.** Smog starts and clearings are scored separately.
-3. **An action.** The week plan is scored by the air on the days the lessons took place, not by forecast error.
-4. **A harder second test.** The finished model was run once on 2026 data from a different, low-cost sensor, under rules written down before the run.
+1. **A real clock:** the forecast uses only readings that existed at 18:00, and the baseline gets the same information.
+2. **The days that matter:** smog starts and clearings are scored separately.
+3. **An action:** a week plan, scored by the air on the days the lessons took place.
+4. **A harder second test:** the finished model, run once on 2026 data from a different low-cost sensor, under rules written down before the run.
 
 ## How it works
 
-**Data.** Hourly PM2.5 from one reference-grade monitor in Almaty (OpenAQ location 8876), April 2020 – November 2025, and city weather from Open-Meteo. The record has gaps, and a day counts only if at least 18 of its 24 hours were measured. That leaves 1,282 evenings with inputs and an answer.
+**Data.** Hourly PM2.5 from one reference-grade monitor in Almaty (OpenAQ location 8876), April 2020 – November 2025, and city weather from Open-Meteo. A day counts only with at least 18 measured hours, which leaves 1,282 evenings.
 
-**Split by date, never shuffled.** Train to September 2023 (538 evenings), validation to September 2024 (348), test from 11 October 2024 to 13 November 2025 (396), scored once.
+**Split by date, never shuffled.** Train to September 2023 (538 evenings), validation to September 2024 (348), test October 2024 – November 2025 (396), scored once.
 
-**Model.** A linear model (ridge regression) that predicts the logarithm of PM2.5 from 26 inputs: the air in the last hours and days, the season, and tomorrow's weather. It was chosen on two earlier winters by a rule written beforehand: take the simplest model unless a more complex one is more than 5% better. Gradient boosting was not.
+**Model.** A linear model (ridge regression) predicts the logarithm of PM2.5 from 26 inputs: recent air, season and tomorrow's weather. It was chosen on two earlier winters by a rule set beforehand: the simplest model wins unless a complex one is over 5% better. Gradient boosting was not.
 
 ## Results
 
@@ -49,19 +49,19 @@ Starting point: suggested project 4.3.2, Next-day air quality forecast. Added to
 
 Our baseline scored 17.0 and our model 12.2 on held-out test data: 4.8 µg/m³ less error per day (95% interval 3.0 to 7.0).
 
-- **As a warning** for "tomorrow above 35.4 µg/m³" (88 such days): the model caught 72 with 22 false alarms, the baseline 69 with 40. Both warning levels were set on the validation year by the same rule.
-- **When smog starts** (31 days) the model warned on 17 and the baseline on 12. **When the air clears** (28 days) the baseline raised a false alarm on all 28, the model on 13.
-- **Weather input.** The main test takes tomorrow's weather from the weather model's record of that day, as if the weather forecast were perfect. With real archived forecasts, issued one and two days earlier, the error stayed at 12.2 and 12.1.
-- **The week plan** (29 school weeks, 2 outdoor lessons each): PM2.5 on lesson days was 40.0 with a fixed timetable and 35.4 with the plan, 4.6 cleaner (95% interval 0.8 to 8.8). Choosing the days with hindsight would give 26.7.
+- **Warnings** for "tomorrow above 35.4 µg/m³" (88 such days): the model caught 72 with 22 false alarms, the baseline 69 with 40. Both warning levels were tuned on the validation year by one rule.
+- **Smog starts** (31 days): the model warned on 17, the baseline on 12. **Clearings** (28 days): the baseline raised 28 false alarms, the model 13.
+- **Weather input:** the main test takes tomorrow's weather from the weather model's record of that day, as if the forecast were perfect. With real archived forecasts, one and two days old, the error stayed at 12.2 and 12.1.
+- **Week plan** (29 school weeks, 2 outdoor lessons each): PM2.5 on lesson days fell from 40.0 with a fixed timetable to 35.4 (95% interval of the gain 0.8 to 8.8). Hindsight would give 26.7.
 
 ![Forecast made the evening before, against what was measured, over the whole test period](results/figures/03_test_period.png)
 
 ### Where it fails, and why we think so
 
-- **On the dirtiest days.** On the 11 test days above 100 µg/m³ the forecast was on average 35 µg/m³ too low. The largest miss: 41 forecast, 98 measured (2 February 2025). Such days are rare in the training data, and a model fitted to the average error pulls its forecasts toward typical values. An extra input for the lid of warm air over the city (mountain minus city temperature) helped in one earlier winter and hurt in the other, so it was left out.
-- **On a different sensor.** On a low-cost citizen sensor 2 km away, in 2026, the finished model lost to the baseline: 9.9 against 7.5 µg/m³ on Oct–Mar days. It had learned the level of its own monitor; this sensor reads about 0.68 times what the model expects. A school would need a few months of its own readings before it could trust the forecast.
-- **During school hours.** The model forecasts the daily average, but the air between 08:00 and 18:00 is dirtier (51.8 against 39.1 µg/m³). Counted by school hours, the warning missed 34 of 115 bad days and the baseline 32, so there it has no advantage.
-- **The week plan is not proven better than the same rule fed with the baseline** (35.4 against 37.5; the 95% interval of the difference, −1.3 to 5.9, includes zero).
+- **The dirtiest days.** On the 11 test days above 100 µg/m³ the forecast was on average 35 too low; the largest miss was 41 forecast, 98 measured. Such days are rare in the training data, and a model fitted to the average error pulls toward typical values.
+- **A different sensor.** On a low-cost citizen sensor 2 km away (2026) the model lost to the baseline: 9.9 against 7.5 µg/m³. It had learned the level of its own monitor (this sensor reads about 0.68 times what it expects), so a school would need months of its own readings first.
+- **School hours.** The model forecasts the daily average, but the air between 08:00 and 18:00 is dirtier (51.8 against 39.1). Counted by school hours, the warning missed 34 of 115 bad days and the baseline 32: no advantage there.
+- **The week plan is not proven better than the same rule fed with the baseline** (35.4 against 37.5; 95% interval of the difference −1.3 to 5.9).
 
 ## What we'd do next
 
@@ -70,13 +70,8 @@ Our baseline scored 17.0 and our model 12.2 on held-out test data: 4.8 µg/m³ l
 
 ## Sources
 
-- **Air data:** OpenAQ, [location 8876 "Almaty"](https://explore.openaq.org/locations/8876), provider AirNow, licence US Public Domain; from the [public OpenAQ archive](https://docs.openaq.org/aws/about).
-- **Weather data:** [Open-Meteo](https://open-meteo.com/) Historical Weather API and Previous Runs API (ECMWF IFS), licence CC BY 4.0.
-- **Global model used as an extra comparison:** CAMS global forecasts (Copernicus Atmosphere Monitoring Service) through the [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api).
-- **2026 sensor:** [sensor.community](https://sensor.community/) archive, SDS011 sensor no. 78340, licence ODbL.
-- **Air categories:** [US EPA AQI fact sheet, 2024](https://www.epa.gov/system/files/documents/2024-02/pm-naaqs-air-quality-index-fact-sheet.pdf).
-- **Libraries:** pandas, NumPy, scikit-learn, Matplotlib, requests; LightGBM was tried during development; jupytext and nbclient built the notebook; Playwright checks the demo page.
-- **Starting point:** Veritas AI project brief 4.3.2.
+- **Data:** OpenAQ [location 8876 "Almaty"](https://explore.openaq.org/locations/8876) from the [public archive](https://docs.openaq.org/aws/about) (provider AirNow, US Public Domain) · [Open-Meteo](https://open-meteo.com/) weather record and archived forecasts (ECMWF IFS, CC BY 4.0) · CAMS global model through the [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) · [sensor.community](https://sensor.community/) sensor no. 78340 (ODbL) · air categories from the [US EPA, 2024](https://www.epa.gov/system/files/documents/2024-02/pm-naaqs-air-quality-index-fact-sheet.pdf).
+- **Libraries:** pandas, NumPy, scikit-learn, Matplotlib, requests; jupytext and nbclient built the notebook; Playwright checks the demo page; LightGBM was tried during development. **Starting point:** Veritas AI project brief 4.3.2.
 - **AI tools:** Claude Code (Anthropic's AI coding agent). It did most of the engineering: it found the data sources, wrote the code and the demo page, ran the experiments and drafted this text. I set the task and its rules (one real user, public data only, a fair baseline, a test period locked before scoring, honest reporting of weak results), chose the Climate track, asked for the timetable step and reviewed the results.
 
 A prototype, not health advice. One monitor is one point in the city.
