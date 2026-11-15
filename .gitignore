@@ -1,8 +1,8 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
-data/cache/
 .env
 .venv/
 flagged/
 .gradio/
+data/cache/
