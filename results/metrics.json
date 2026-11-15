@@ -107,12 +107,12 @@
  },
  "likely_range_log": {
   "heating": [
-   -0.6273956452962057,
-   0.3325744610693598
+   -0.6273956452962045,
+   0.33257446106935706
   ],
   "warm": [
-   -0.3878801729359562,
-   0.27264829717465333
+   -0.3878801729359525,
+   0.27264829717465505
   ]
  },
  "real_forecast_check": {
@@ -171,15 +171,15 @@
    "vs persistence": "-32%"
   },
   "Boosting | B: + city weather tomorrow": {
-   "MAE winter 2022/23": 15.35,
+   "MAE winter 2022/23": 15.29,
    "MAE winter 2023/24": 12.17,
-   "average": 13.76,
+   "average": 13.73,
    "vs persistence": "-35%"
   },
   "Boosting | C: + inversion signal": {
-   "MAE winter 2022/23": 14.93,
-   "MAE winter 2023/24": 12.71,
-   "average": 13.82,
+   "MAE winter 2022/23": 15.02,
+   "MAE winter 2023/24": 12.67,
+   "average": 13.84,
    "vs persistence": "-35%"
   }
  },
@@ -240,6 +240,227 @@
    "avoidable dirt removed (persistence)": "13%",
    "avoidable dirt removed (our forecast)": "26%"
   }
+ },
+ "cams_check_test": {
+  "cutoff_tuned_on_validation": 22.5,
+  "table": {
+   "Our model": {
+    "MAE Oct-Mar": 12.15,
+    "MAE all days": 8.21,
+    "average bias Oct-Mar": -1.16,
+    "warning cutoff": 32.5,
+    "caught": 72,
+    "missed": 16,
+    "false alarms": 22
+   },
+   "Persistence (last 24 h at 18:00)": {
+    "MAE Oct-Mar": 17.0,
+    "MAE all days": 10.93,
+    "average bias Oct-Mar": -0.01,
+    "warning cutoff": 29.5,
+    "caught": 69,
+    "missed": 19,
+    "false alarms": 40
+   },
+   "Global model CAMS, cutoff tuned like the others": {
+    "MAE Oct-Mar": 16.59,
+    "MAE all days": 11.03,
+    "average bias Oct-Mar": -10.68,
+    "warning cutoff": 22.5,
+    "caught": 87,
+    "missed": 1,
+    "false alarms": 66
+   },
+   "Global model CAMS, plain rule (warn above 35.4)": {
+    "MAE Oct-Mar": 16.59,
+    "MAE all days": 11.03,
+    "average bias Oct-Mar": -10.68,
+    "warning cutoff": 35.4,
+    "caught": 37,
+    "missed": 51,
+    "false alarms": 10
+   }
+  },
+  "model_gain_vs_cams_oct_mar": {
+   "mean": 4.43,
+   "ci95": [
+    1.69,
+    7.57
+   ]
+  }
+ },
+ "school_hours_check_test": {
+  "days": 216,
+  "mean_whole_day": 39.08,
+  "mean_school_hours": 51.79,
+  "bad_by_whole_day": 88,
+  "bad_by_school_hours": 115,
+  "alerts": {
+   "Our model": {
+    "bad days": 115,
+    "caught": 81,
+    "missed": 34,
+    "false alarms": 13,
+    "correctly quiet": 88,
+    "recall": 0.7,
+    "precision": 0.86
+   },
+   "Persistence (last 24 h at 18:00)": {
+    "bad days": 115,
+    "caught": 83,
+    "missed": 32,
+    "false alarms": 26,
+    "correctly quiet": 75,
+    "recall": 0.72,
+    "precision": 0.76
+   }
+  },
+  "timetable_school_hours_air": {
+   "rule + our forecast": {
+    "rule": 48.38,
+    "fixed timetable": 53.97,
+    "perfect hindsight": 31.79
+   },
+   "rule + persistence": {
+    "rule": 50.84,
+    "fixed timetable": 53.97,
+    "perfect hindsight": 31.79
+   }
+  }
+ },
+ "external_2026": {
+  "sensor": "sensor.community SDS011 no. 78340 (citizen sensor, central Almaty)",
+  "protocol_commit": "dd8b550",
+  "period": [
+   "2026-01-03",
+   "2026-11-14"
+  ],
+  "days": 234,
+  "days_oct_mar": 115,
+  "bad_days_oct_mar": 10,
+  "table": {
+   "Persistence (last 24 h at 18:00), same sensor": {
+    "MAE Oct-Mar": 7.48,
+    "MAE all days": 4.51,
+    "caught": 5,
+    "missed": 5,
+    "false alarms": 9
+   },
+   "Global model CAMS": {
+    "MAE Oct-Mar": 12.43,
+    "MAE all days": 12.18,
+    "caught": 10,
+    "missed": 0,
+    "false alarms": 76
+   },
+   "Our frozen model + a real forecast, 2 days old (main)": {
+    "MAE Oct-Mar": 9.89,
+    "MAE all days": 6.07,
+    "caught": 8,
+    "missed": 2,
+    "false alarms": 15
+   },
+   "Our frozen model + a real forecast, 1 day old": {
+    "MAE Oct-Mar": 9.89,
+    "MAE all days": 6.13,
+    "caught": 7,
+    "missed": 3,
+    "false alarms": 15
+   }
+  },
+  "gain_vs_persistence_oct_mar": {
+   "mean": -2.41,
+   "ci95": [
+    -3.39,
+    -1.34
+   ]
+  },
+  "gain_vs_persistence_all_days": {
+   "mean": -1.56,
+   "ci95": [
+    -2.2,
+    -0.94
+   ]
+  },
+  "range_coverage_oct_mar": 0.713,
+  "by_kind_of_day": {
+   "1. smog starts (clean -> bad)": {
+    "days": 6,
+    "model_warned": 4,
+    "persistence_warned": 1,
+    "model_error": 14.18,
+    "persistence_error": 20.39
+   },
+   "2. smog continues (bad -> bad)": {
+    "days": 4,
+    "model_warned": 4,
+    "persistence_warned": 4,
+    "model_error": 17.79,
+    "persistence_error": 7.17
+   },
+   "3. air clears (bad -> clean)": {
+    "days": 5,
+    "model_warned": 5,
+    "persistence_warned": 5,
+    "model_error": 23.8,
+    "persistence_error": 20.76
+   },
+   "4. stays clean (clean -> clean)": {
+    "days": 100,
+    "model_warned": 10,
+    "persistence_warned": 4,
+    "model_error": 8.62,
+    "persistence_error": 6.06
+   }
+  },
+  "timetable": {
+   "1": {
+    "weeks": 15,
+    "fixed timetable": 17.48,
+    "rule + persistence": 16.38,
+    "rule + our forecast": 14.51,
+    "perfect hindsight": 9.89,
+    "avoidable dirt removed (persistence)": "15%",
+    "avoidable dirt removed (our forecast)": "39%"
+   },
+   "2": {
+    "weeks": 15,
+    "fixed timetable": 17.48,
+    "rule + persistence": 17.15,
+    "rule + our forecast": 14.91,
+    "perfect hindsight": 11.58,
+    "avoidable dirt removed (persistence)": "6%",
+    "avoidable dirt removed (our forecast)": "44%"
+   },
+   "3": {
+    "weeks": 15,
+    "fixed timetable": 17.48,
+    "rule + persistence": 17.31,
+    "rule + our forecast": 15.89,
+    "perfect hindsight": 13.37,
+    "avoidable dirt removed (persistence)": "4%",
+    "avoidable dirt removed (our forecast)": "39%"
+   }
+  },
+  "timetable_quota2": {
+   "weeks": 15,
+   "cleaner_than_fixed": 2.57,
+   "ci95_vs_fixed": [
+    0.21,
+    5.15
+   ],
+   "cleaner_than_persistence_planner": 2.24,
+   "ci95_vs_persistence": [
+    -0.02,
+    5.55
+   ]
+  }
+ },
+ "library_versions": {
+  "python": "3.13.18",
+  "pandas": "3.1.1",
+  "numpy": "2.5.4",
+  "scikit-learn": "1.9.1"
  },
  "timetable_test_quota2": {
   "weeks": 29,
