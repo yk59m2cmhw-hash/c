@@ -3,7 +3,7 @@
 **Track:** AI + Climate
 **Team:** Bakdaulet (solo)
 
-**Notebook with saved outputs:** [`notebooks/SmogTomorrow.ipynb`](notebooks/SmogTomorrow.ipynb) · [open in Colab](https://colab.research.google.com/github/yk59m2cmhw-hash/c/blob/claude/relaxed-dirac-2g7xn0/notebooks/SmogTomorrow.ipynb) · **All results:** [`results/RESULTS.md`](results/RESULTS.md)
+**Notebook with saved outputs:** [`notebooks/SmogTomorrow.ipynb`](notebooks/SmogTomorrow.ipynb) · [open in Colab](https://colab.research.google.com/github/yk59m2cmhw-hash/c/blob/claude/sleepy-mendel-te40eu/notebooks/SmogTomorrow.ipynb) · **All results:** [`results/RESULTS.md`](results/RESULTS.md)
 
 ## The problem
 
@@ -11,9 +11,14 @@ Almaty, Kazakhstan, lies at the foot of high mountains, and in the heating seaso
 
 ## What we built
 
-Every evening at 18:00 the tool takes today's air and weather measurements and forecasts tomorrow's school hours (08:00–18:00): the expected PM2.5, a likely range, a plain decision (**PE indoors** or **PE outdoors**) and the three inputs that moved the forecast most. In the demo you pick an evening from the test period and see the forecast next to what was measured the next day.
+Every evening at 18:00 the tool forecasts tomorrow's school hours (08:00–18:00): the expected PM2.5, a likely range, a plain decision (**PE indoors** or **PE outdoors**) and the three inputs that moved the forecast most. It has two models built by the same code:
 
-> Evening of 16 Dec 2024: today was clean (23 µg/m³). Forecast: about 63 µg/m³, likely 39–113, ⚠️ smog warning. Measured the next day: 67 µg/m³.
+- **Main model:** uses today's PM2.5 readings and airport weather. In the demo you pick an evening from the test period and see the forecast next to what was measured the next day.
+- **Sensor-free model:** uses airport weather only, so it needs no PM2.5 monitor and runs today. `python src/live.py`, or the first tab of the demo, downloads the latest airport reports and forecasts the real tomorrow.
+
+> **Replay, evening of 16 Dec 2024:** today was clean (23 µg/m³). Forecast: about 63 µg/m³, likely 39–113, ⚠️ smog warning. Measured the next day: 67 µg/m³.
+>
+> **Live, evening of 15 Nov 2026, no PM2.5 input:** forecast for Monday 16 Nov: about 57 µg/m³, likely 25–86, ⚠️ smog warning. We cannot check this one against the reference monitor.
 
 ## What we added
 
@@ -22,37 +27,41 @@ We started from suggested project **4.3.2 Next-day air quality forecast** and ad
 - **Our own place and user:** Almaty, a school, and a target that matches the decision (the mean over school hours, forecast at 18:00 from data that already exists).
 - **Our own question 1: is a free global forecast enough for Almaty?** No. The CAMS global model reads 13.6 µg/m³ too low here, and with the plain rule "warn above 35" it would have warned on only 47 of 119 smog days.
 - **Our own question 2: what happens on the days the air changes?** These are the days a forecast is for, and "tomorrow = today" is wrong on every one of them.
-- **A stated decision rule and a locked test.** A missed smog day counts three times a false alarm, and every method's warning threshold was chosen on validation data with that rule. The split and settings were committed to git (`7f98623`) before the test period was scored.
+- **Our own question 3: can a school get a useful warning with no PM2.5 monitor at all?** The public record of the monitor we trained on ends on 14 November 2025, so today the main model cannot be run for the real tomorrow. A model that sees only airport weather and the calendar does almost as well, and that is the one that forecasts the real tomorrow.
+- **A stated decision rule and a locked test.** A missed smog day counts three times a false alarm, and every method's warning threshold was chosen on validation data with that rule. The split and settings were committed to git before the test period was scored (`7f98623` for the main model, `37fb006` for the sensor-free model).
 
 ## How it works
 
 **Data.** 34,534 hourly PM2.5 readings (Apr 2020 – Nov 2025) from a reference-grade monitor in Almaty and 126,509 weather reports from Almaty airport. A day counts only if at least 6 of its 10 daytime hours were measured; outage days are dropped, not filled in. This leaves 1,348 evening-to-next-day pairs.
 
-**Model.** Gradient-boosted decision trees (scikit-learn) on 30 inputs: recent PM2.5, airport weather (wind, temperature, pressure, visibility, rain or snow, fog) and the calendar. Trees fit here because the effect of weather is not a straight line and some readings are missing.
+**Model.** Gradient-boosted decision trees (scikit-learn) on 30 inputs: recent PM2.5, airport weather (wind, temperature, pressure, visibility, rain or snow, fog) and the calendar. Trees fit here because the effect of weather is not a straight line and some readings are missing. The sensor-free model is the same model given only the 21 weather and calendar inputs.
 
-**Split by date, never shuffled.** Train to Sep 2023 (598 days), validation Oct 2023 – Sep 2024 (352 days, used for every choice), test Oct 2024 – Nov 2025 (398 days, scored once).
+**Split by date, never shuffled.** Train to Sep 2023 (598 days), validation Oct 2023 – Sep 2024 (352 days, used for every choice), test Oct 2024 – Nov 2025 (398 days).
 
 ## Results
 
-Test period: 398 days, 119 smog days. MAE is the average miss in µg/m³.
+Test period: 398 days, 119 smog days. MAE is the average miss in µg/m³. Cost is 3 × missed + false alarms.
 
-| Method | MAE | Smog days missed | False alarms |
-|---|---|---|---|
-| Baseline: tomorrow = today | 15.3 | 11 | 76 |
-| Global model (CAMS) | 16.6 | 9 | 83 |
-| Linear model | 13.1 | 21 | 45 |
-| **Our model** | **12.3** | 16 | 52 |
+| Method | Needs a PM2.5 monitor | MAE | Smog days missed | False alarms | Cost |
+|---|---|---|---|---|---|
+| Baseline: tomorrow = today | yes | 15.3 | 11 | 76 | 109 |
+| Global model (CAMS) | no | 16.6 | 9 | 83 | 110 |
+| Linear model | yes | 13.1 | 21 | 45 | 108 |
+| **Our main model** | yes | **12.3** | 16 | 52 | 100 |
+| **Our sensor-free model** | **no** | 13.2 | 19 | 40 | 97 |
 
-Our baseline scored 15.3 and our model 12.3 on held-out test data, 20% lower (95% interval for the gain: 1.7 to 4.5 µg/m³). The model raises a third fewer false alarms than the baseline but **misses more smog days, 16 against 11**, so by our 3-to-1 rule it is only modestly ahead (100 cost points against 109). The warning counts depend on the threshold: when we sweep it, the model raises fewer false alarms than the baseline at every number of missed days we checked (67 against 76 at 11 missed), while CAMS with a re-tuned threshold comes close at some settings. On the 69 days when the air crossed the 35 line, the model was on the right side 36 times.
+Our baseline scored 15.3 and our main model 12.3 on held-out test data, 20% lower (95% interval for the gain: 1.7 to 4.5 µg/m³). The model raises a third fewer false alarms than the baseline but **misses more smog days, 16 against 11**, so by our 3-to-1 rule it is only modestly ahead. The warning counts depend on the threshold: when we sweep it, the model raises fewer false alarms than the baseline at every number of missed days we checked (67 against 76 at 11 missed), while CAMS with a re-tuned threshold comes close at some settings.
+
+The sensor-free model scored 13.2 with no PM2.5 input, 14% lower than a baseline that needs a monitor (95% interval for the gain: 0.5 to 3.7). It misses the most smog days (19) and raises the fewest false alarms (40), so by the cost rule the three are close. Knowing today's PM2.5 improves the number, but most of the warning comes from the weather. On the 69 days when the air crossed the 35 line, the main model was on the right side 36 times and the sensor-free model 40 times; a plain monthly average gets 35 right, so on these days our models are barely better than the calendar. This was a second look at the test period: it had been scored once for the main model before the sensor-free model was scored, and no choice for the sensor-free model used it.
 
 ![Forecast against measurements in winter 2024-25](results/fig_forecast_vs_measured.png)
 
-**Where it fails.** The eight largest misses are all in January–February 2025, when PM2.5 doubled or halved overnight (80 → 165; 184 → 48). Wind at the airport was about 2 m/s on both days with no rain or snow, so nothing in our inputs announced the change. We think the cause is the temperature inversion above the city forming or breaking, which a ground station 14 km away cannot see, and the model knows nothing about tomorrow's weather. Also, the monitor's public record stops on 14 Nov 2025, so the demo replays past evenings instead of forecasting the real tomorrow.
+**Where it fails.** The eight largest misses are all in January–February 2025, when PM2.5 doubled or halved overnight (80 → 165; 184 → 48). Wind at the airport was about 2 m/s on both days with no rain or snow, so nothing in our inputs announced the change. We think the cause is the temperature inversion above the city forming or breaking, which a ground station 14 km away cannot see, and neither model knows anything about tomorrow's weather. The live forecast has a second limit: with no public reference data for 2026 we cannot score it, so the 2024–25 test is our only evidence for how far to trust it.
 
 ## What we'd do next
 
 - Add tomorrow's weather forecast and weather-balloon data so the model can see inversions, then check whether the January misses shrink.
-- Connect a sensor that reports today, and try the warning with PE teachers at a school in Almaty for one month.
+- Score the live forecasts through this winter against citizen sensors in Almaty, and try the warning with PE teachers at one school for a month.
 
 ## Sources
 
@@ -71,6 +80,7 @@ No API key, no GPU, about one minute.
 ```bash
 pip install -r requirements.txt
 python src/run_experiment.py     # rebuilds every number and figure in results/
+python src/live.py               # forecasts the real tomorrow from fresh airport weather
 python app.py                    # opens the demo page
 ```
 
@@ -81,12 +91,14 @@ The reported numbers use scikit-learn 1.9.1, pinned in `requirements.txt`. Other
 | Path | What it is |
 |---|---|
 | `src/download_data.py` | downloads all data |
-| `src/almaty_air.py` | features, baselines, model, metrics |
+| `src/almaty_air.py` | features, baselines, models, metrics |
 | `src/run_experiment.py` | the whole experiment → `results/` |
+| `src/live.py` | the sensor-free forecast for the real tomorrow → `results/live_forecast.json` |
 | `src/demo.py`, `app.py` | the demo page |
 | `notebooks/SmogTomorrow.ipynb` | the same steps as a notebook, outputs saved |
-| `PROJECT_SPEC.md` | the evaluation protocol, written before the test was scored |
+| `PROJECT_SPEC.md` | the evaluation protocol, written before each model was scored on the test period |
 | `tests/test_no_leakage.py` | deletes all data after 18:00 for 40 evenings and confirms no model input changes |
+| `tests/test_live_forecast.py` | confirms the live forecast builds the same inputs as the experiment and uses nothing after 18:00 |
 | `docs/` | notes for the author (in Russian) |
 
 **Assumptions worth knowing**
@@ -94,3 +106,4 @@ The reported numbers use scikit-learn 1.9.1, pinned in `requirements.txt`. Other
 - OpenAQ timestamps are treated as the end of each hourly average. If they marked the start, the forecast would in effect be issued at 19:00 instead of 18:00; the target (08:00–18:00 the next day) would still lie entirely in the future.
 - The CAMS values come from Open-Meteo's archive, which keeps the freshest model runs, so they are somewhat better than a true day-ahead CAMS forecast. This favours CAMS in the comparison.
 - The warning thresholds were chosen once, on validation data. The threshold sweep on the test days was added afterwards as a descriptive check and is labelled as such in `results/RESULTS.md`.
+- The live forecast is made by the sensor-free model trained on all 1,449 days that have a reference measurement the next day, including the test period. The scores above are for the version trained without the test period.

@@ -16,7 +16,7 @@
   "weather_source": "downloaded now from the Iowa Environmental Mesonet",
   "weather_reports_used_today": 21,
   "last_weather_report_used": "2026-11-15 17:30:00+05:00",
-  "generated_at": "2026-11-15 23:33:38+05:00",
+  "generated_at": "2026-11-15 23:38:24+05:00",
   "model": "sensor-free: 21 weather and calendar inputs, trained on 1449 days with reference measurements",
   "inputs": {
     "temp_day": 2.95,

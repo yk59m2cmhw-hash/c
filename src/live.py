@@ -3,13 +3,13 @@
 
     python src/live.py
 
-The reference monitor in Almaty stopped publishing on 14 Nov 2025, so today's
-PM2.5 is not available to a school. This script downloads the latest weather
+The public record of the reference monitor we trained on ends on 14 Nov 2025,
+so the main model cannot be run for the real tomorrow. This script downloads the latest weather
 reports from Almaty airport (free, no key) and runs the sensor-free model:
 airport weather and the calendar only. The result is written to
 results/live_forecast.json.
 
-Nobody can check this forecast against the reference monitor (it is silent).
+This forecast cannot be checked against the reference monitor (no public data).
 What we do know is how the same kind of model did on the 398 test days of
 2024-25; see results/RESULTS.md.
 """
@@ -145,7 +145,7 @@ def as_text(f: dict) -> str:
         f"**Expected daytime PM2.5 (08:00–18:00): about {f['forecast_pm25']:.0f} µg/m³**, likely between {f['likely_low']:.0f} and {f['likely_high']:.0f}. "
         f"A warning is given when the forecast is above {f['warning_threshold']:.0f} µg/m³.",
         "**Why:**\n" + "\n".join(f"- {line}" for line in f["why"]),
-        "*This forecast cannot be checked against the reference monitor, which has been silent since 14 Nov 2025. "
+        "*This forecast cannot be checked against the reference monitor, whose public record ends on 14 Nov 2025. "
         "On 398 test days in 2024-25 the same kind of model missed 19 of 119 smog days and raised 40 false alarms. Prototype, not an official warning.*",
     ])
 

@@ -133,7 +133,7 @@ WEATHER_FEATURES = ["temp_day", "temp_min24h", "temp_change", "wind_day", "wind_
 CALENDAR_FEATURES = ["season_sin", "season_cos", "weekday", "is_weekend"]
 FEATURES = PM_FEATURES + WEATHER_FEATURES + CALENDAR_FEATURES
 # Inputs of the sensor-free model: airport weather and the calendar only. It needs no PM2.5 monitor,
-# so it still works now that the reference monitor has stopped publishing (last reading: 14 Nov 2025).
+# so it still works although the public record of the reference monitor ends on 14 Nov 2025.
 SENSOR_FREE_FEATURES = WEATHER_FEATURES + CALENDAR_FEATURES
 
 

@@ -222,7 +222,7 @@ def markdown_report(valid: dict, test: dict, worst: pd.DataFrame, importance: pd
               f"({m['change_days_right_side']['smog_arrives']} arrivals, {m['change_days_right_side']['smog_clears']} clearings).", "",
               f"Model's 10-90% range contained the measured value on {100 * test['band_10_90_coverage']:.0f}% of test days (target 80%).", "",
               "## Forecasting without any PM2.5 sensor (added on 15 Nov 2026)", "",
-              "The reference monitor stopped publishing on 14 Nov 2025, so today neither our main model nor 'tomorrow = today' can be "
+              "The public record of the reference monitor ends on 14 Nov 2025, so today neither our main model nor 'tomorrow = today' can be "
               "computed for the real tomorrow. The sensor-free model uses airport weather and the calendar only. Its inputs, settings and "
               "warning threshold (36.0, chosen on validation) were committed in `37fb006` before it was scored on the test period. "
               "The test period had already been scored once for the main model, so this is a second look at the same period.", "",

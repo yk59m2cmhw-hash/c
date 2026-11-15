@@ -180,8 +180,9 @@ def build_app(forecaster: Forecaster | None = None):
             "An evening forecast of tomorrow's daytime air pollution (PM2.5) for schools in Almaty, Kazakhstan.")
         with gr.Tab("Tomorrow (live, no sensor needed)"):
             gr.Markdown(
-                "Almaty's public reference monitor stopped publishing in November 2025, so a school cannot look up today's PM2.5. "
-                "This forecast uses **airport weather reports only**: it downloads the latest ones and forecasts the real tomorrow.")
+                "The public record of the reference monitor we trained on ends on 14 November 2025, so the main model, which needs "
+                "that monitor's readings from today, cannot be run for the real tomorrow. This forecast uses **airport weather reports only**: "
+                "it downloads the latest ones and forecasts the real tomorrow.")
             live_button = gr.Button("Forecast the real tomorrow", variant="primary")
             live_text = gr.Markdown()
             live_button.click(fc.tomorrow, inputs=None, outputs=live_text)
