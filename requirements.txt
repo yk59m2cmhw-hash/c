@@ -1,0 +1,3 @@
+pillow
+pillow-heif        # only for iPhone photos (HEIC)
+gradio             # only for the demo page
