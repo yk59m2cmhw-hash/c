@@ -218,7 +218,8 @@ def markdown_report(valid: dict, test: dict, worst: pd.DataFrame, importance: pd
     return "\n".join(lines)
 
 
-def main() -> None:
+def run() -> dict:
+    """Runs everything, writes results/ and returns the main objects (used by the notebook)."""
     OUT.mkdir(exist_ok=True)
     pm = aa.load_pm(aa.RAW / "openaq_almaty_8876_pm25_hourly.csv")
     metar, cams = aa.load_metar(), aa.load_cams()
@@ -285,6 +286,12 @@ def main() -> None:
     fig_timeseries(pred_test, OUT / "fig_forecast_vs_measured.png")
     fig_mae(summary_test, OUT / "fig_mae_by_method.png")
     fig_alerts(summary_test, OUT / "fig_alert_mistakes.png")
+    return {"metrics": metrics, "test_predictions": pred_test, "worst_misses": worst_table, "importance": importance,
+            "ablation": ablation, "table": table, "parts": parts}
+
+
+def main() -> None:
+    run()
     print((OUT / "RESULTS.md").read_text())
 
 
