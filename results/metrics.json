@@ -295,8 +295,12 @@
   "mean_school_hours": 51.79,
   "bad_by_whole_day": 88,
   "bad_by_school_hours": 115,
+  "cutoffs_retuned_for_school_hours": {
+   "model": 22.0,
+   "persistence": 21.0
+  },
   "alerts": {
-   "Our model": {
+   "Our model, cutoff as before (32.5)": {
     "bad days": 115,
     "caught": 81,
     "missed": 34,
@@ -305,7 +309,7 @@
     "recall": 0.7,
     "precision": 0.86
    },
-   "Persistence (last 24 h at 18:00)": {
+   "Persistence, cutoff as before (29.5)": {
     "bad days": 115,
     "caught": 83,
     "missed": 32,
@@ -313,6 +317,24 @@
     "correctly quiet": 75,
     "recall": 0.72,
     "precision": 0.76
+   },
+   "Our model, cutoff re-tuned for school hours (22.0)": {
+    "bad days": 115,
+    "caught": 108,
+    "missed": 7,
+    "false alarms": 61,
+    "correctly quiet": 40,
+    "recall": 0.94,
+    "precision": 0.64
+   },
+   "Persistence, cutoff re-tuned for school hours (21.0)": {
+    "bad days": 115,
+    "caught": 96,
+    "missed": 19,
+    "false alarms": 55,
+    "correctly quiet": 46,
+    "recall": 0.83,
+    "precision": 0.64
    }
   },
   "timetable_school_hours_air": {
@@ -411,6 +433,79 @@
     "persistence_warned": 4,
     "model_error": 8.62,
     "persistence_error": 6.06
+   }
+  },
+  "level_shift_test": {
+   "protocol_commit": "62ff508",
+   "fitted_on_days": 75,
+   "measured_over_expected": 0.676,
+   "check_period": [
+    "2026-10-04",
+    "2026-11-14"
+   ],
+   "check_days": 40,
+   "table": {
+    "Persistence (last 24 h at 18:00), same sensor": {
+     "MAE": 4.17,
+     "average bias": -0.35,
+     "caught": 0,
+     "missed": 0,
+     "false alarms": 0
+    },
+    "Our frozen model, as it is": {
+     "MAE": 6.12,
+     "average bias": 4.99,
+     "caught": 0,
+     "missed": 0,
+     "false alarms": 0
+    },
+    "Our frozen model + the one-number level correction": {
+     "MAE": 3.86,
+     "average bias": -0.84,
+     "caught": 0,
+     "missed": 0,
+     "false alarms": 0
+    }
+   },
+   "gain_vs_persistence": {
+    "mean": 0.31,
+    "ci95": [
+     -0.96,
+     1.74
+    ]
+   },
+   "all_days_after_march": {
+    "days": 159,
+    "table": {
+     "Persistence (last 24 h at 18:00), same sensor": {
+      "MAE": 2.27,
+      "average bias": -0.07,
+      "caught": 0,
+      "missed": 0,
+      "false alarms": 0
+     },
+     "Our frozen model, as it is": {
+      "MAE": 3.32,
+      "average bias": 2.82,
+      "caught": 0,
+      "missed": 0,
+      "false alarms": 0
+     },
+     "Our frozen model + the one-number level correction": {
+      "MAE": 1.95,
+      "average bias": -0.6,
+      "caught": 0,
+      "missed": 0,
+      "false alarms": 0
+     }
+    },
+    "gain_vs_persistence": {
+     "mean": 0.32,
+     "ci95": [
+      -0.1,
+      0.76
+     ]
+    }
    }
   },
   "timetable": {

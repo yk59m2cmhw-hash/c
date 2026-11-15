@@ -1,6 +1,9 @@
-pandas
+# The saved results were produced with Python 3.13, pandas 3.1.1, numpy 2.5.4, scikit-learn 1.9.1, matplotlib 3.11.2.
+# Other recent versions give the same numbers for the final model; the gradient-boosting candidates in section 5
+# can move by about 0.1 µg/m³ between library versions (the choice of model does not depend on it).
+pandas>=2.2
 numpy
-scikit-learn
-matplotlib
-requests
-gradio  # optional: only for the demo page (RUN_APP = True in the notebook)
+scikit-learn>=1.4
+matplotlib>=3.7
+requests          # only for the download scripts in scripts/
+gradio            # optional: only for the demo page inside the notebook (RUN_APP = True)
