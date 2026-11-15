@@ -27,7 +27,10 @@ ALERT_LEVEL = 35.0              # ug/m3; US EPA 24-hour PM2.5 standard, used as 
 # Warning thresholds (forecast value above which a warning is given). They were chosen on the
 # validation year with tune_threshold() and written into PROJECT_SPEC.md before the test period
 # was scored; they are kept fixed here so that every environment evaluates the same rule.
-ALERT_THRESHOLDS = {"persistence": 23.0, "seasonal": 26.5, "cams": 18.5, "linear": 29.0, "model": 29.0}
+ALERT_THRESHOLDS = {"persistence": 23.0, "seasonal": 26.5, "cams": 18.5, "linear": 29.0, "model": 29.0,
+                    # added on 15 Nov 2026 (addendum in PROJECT_SPEC.md): chosen on the validation year with the same
+                    # 3-to-1 rule and committed before the sensor-free model was scored on the test period
+                    "sensor_free": 36.0}
 
 # Chronological split, fixed BEFORE any model was evaluated (dates are target days).
 TRAIN_END = "2023-09-30"
@@ -125,23 +128,16 @@ WEATHER_FEATURES = ["temp_day", "temp_min24h", "temp_change", "wind_day", "wind_
                     "precip_share", "fog_share", "haze_share"]
 CALENDAR_FEATURES = ["season_sin", "season_cos", "weekday", "is_weekend"]
 FEATURES = PM_FEATURES + WEATHER_FEATURES + CALENDAR_FEATURES
+# Inputs of the sensor-free model: airport weather and the calendar only. It needs no PM2.5 monitor,
+# so it still works now that the reference monitor has stopped publishing (last reading: 14 Nov 2025).
+SENSOR_FREE_FEATURES = WEATHER_FEATURES + CALENDAR_FEATURES
 
 
-def build_table(pm: pd.Series, metar: pd.DataFrame, cams: pd.Series | None = None) -> pd.DataFrame:
-    days = pd.date_range(pm.index.min().tz_localize(None).normalize(), pm.index.max().tz_localize(None).normalize(), freq="D")
-    t = pd.DataFrame(index=days)
+def add_weather_and_calendar(t: pd.DataFrame, metar: pd.DataFrame) -> pd.DataFrame:
+    """Adds the 17 weather inputs and 4 calendar inputs to a table indexed by issue day (today).
 
-    # --- PM2.5 known at 18:00 today
-    t["pm_day"] = daytime(pm, "mean", MIN_DAY_HOURS)
-    t["pm_24h"] = last24h(pm, "mean", 12)
-    t["pm_night"] = overnight(pm, "mean", 6)
-    t["pm_evening"] = evening(pm, "mean", 2)
-    t["pm_max24h"] = last24h(pm, "max", 12)
-    t["pm_day_lag1"] = t["pm_day"].shift(1)
-    t["pm_day_lag2"] = t["pm_day"].shift(2)
-    t["pm_week"] = t["pm_day"].rolling(7, min_periods=3).mean()
-    t["pm_change"] = t["pm_day"] - t["pm_day_lag1"]
-
+    Shared by the experiment and by the live forecast, so both build their inputs with the same code.
+    """
     # --- airport weather known at 18:00 today
     t["temp_day"] = daytime(metar["temp"])
     t["temp_min24h"] = last24h(metar["temp"], "min")
@@ -167,9 +163,34 @@ def build_table(pm: pd.Series, metar: pd.DataFrame, cams: pd.Series | None = Non
     t["season_sin"], t["season_cos"] = np.sin(angle), np.cos(angle)
     t["weekday"] = target_day.dayofweek
     t["is_weekend"] = (target_day.dayofweek >= 5).astype(float)
+    t["target_day"] = target_day
+    return t
+
+
+def build_weather_table(metar: pd.DataFrame, first_day, last_day) -> pd.DataFrame:
+    """Weather and calendar inputs only, one row per issue day. No PM2.5 data is needed."""
+    days = pd.date_range(pd.Timestamp(first_day).normalize(), pd.Timestamp(last_day).normalize(), freq="D")
+    return add_weather_and_calendar(pd.DataFrame(index=days), metar)
+
+
+def build_table(pm: pd.Series, metar: pd.DataFrame, cams: pd.Series | None = None) -> pd.DataFrame:
+    days = pd.date_range(pm.index.min().tz_localize(None).normalize(), pm.index.max().tz_localize(None).normalize(), freq="D")
+    t = pd.DataFrame(index=days)
+
+    # --- PM2.5 known at 18:00 today
+    t["pm_day"] = daytime(pm, "mean", MIN_DAY_HOURS)
+    t["pm_24h"] = last24h(pm, "mean", 12)
+    t["pm_night"] = overnight(pm, "mean", 6)
+    t["pm_evening"] = evening(pm, "mean", 2)
+    t["pm_max24h"] = last24h(pm, "max", 12)
+    t["pm_day_lag1"] = t["pm_day"].shift(1)
+    t["pm_day_lag2"] = t["pm_day"].shift(2)
+    t["pm_week"] = t["pm_day"].rolling(7, min_periods=3).mean()
+    t["pm_change"] = t["pm_day"] - t["pm_day_lag1"]
+
+    add_weather_and_calendar(t, metar)
 
     # --- target and reference forecasts
-    t["target_day"] = target_day
     t["y"] = t["pm_day"].shift(-1)                       # tomorrow's daytime mean (what we predict)
     t["persistence"] = t["pm_day"]                       # "tomorrow = today"
     if cams is not None:
