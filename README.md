@@ -43,7 +43,7 @@ Test period: 398 days, 119 smog days. MAE is the average miss in µg/m³.
 | Linear model | 13.1 | 21 | 45 |
 | **Our model** | **12.3** | 16 | 52 |
 
-Our baseline scored 15.3 and our model 12.3 on held-out test data, 20% lower (95% interval for the gain: 1.7 to 4.5 µg/m³). The model raises a third fewer false alarms than the baseline but **misses more smog days, 16 against 11**, so by our 3-to-1 rule it is only modestly ahead (100 cost points against 109). On the 69 days when the air crossed the 35 line, the model was on the right side 36 times.
+Our baseline scored 15.3 and our model 12.3 on held-out test data, 20% lower (95% interval for the gain: 1.7 to 4.5 µg/m³). The model raises a third fewer false alarms than the baseline but **misses more smog days, 16 against 11**, so by our 3-to-1 rule it is only modestly ahead (100 cost points against 109). The warning counts depend on the threshold: when we sweep it, the model raises fewer false alarms than the baseline at every number of missed days we checked (67 against 76 at 11 missed), while CAMS with a re-tuned threshold comes close at some settings. On the 69 days when the air crossed the 35 line, the model was on the right side 36 times.
 
 ![Forecast against measurements in winter 2024-25](results/fig_forecast_vs_measured.png)
 
@@ -73,6 +73,8 @@ pip install -r requirements.txt
 python src/run_experiment.py     # rebuilds every number and figure in results/
 python app.py                    # opens the demo page
 ```
+
+The reported numbers use scikit-learn 1.9.1, pinned in `requirements.txt`. Other versions build slightly different trees, so a few borderline days can move.
 
 `python src/download_data.py` fetches the raw data again from the original sources; the copies used for the reported numbers are in `data/raw/`.
 

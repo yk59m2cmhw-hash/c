@@ -24,6 +24,11 @@ ISSUE_HOUR = 18                 # the forecast is issued at 18:00 local time
 MIN_DAY_HOURS = 6               # a daytime mean needs at least 6 of 10 hourly values
 ALERT_LEVEL = 35.0              # ug/m3; US EPA 24-hour PM2.5 standard, used as the action level
 
+# Warning thresholds (forecast value above which a warning is given). They were chosen on the
+# validation year with tune_threshold() and written into PROJECT_SPEC.md before the test period
+# was scored; they are kept fixed here so that every environment evaluates the same rule.
+ALERT_THRESHOLDS = {"persistence": 23.0, "seasonal": 26.5, "cams": 18.5, "linear": 29.0, "model": 29.0}
+
 # Chronological split, fixed BEFORE any model was evaluated (dates are target days).
 TRAIN_END = "2023-09-30"
 VALID_END = "2024-09-30"        # validation = 2023-10-01 .. 2024-09-30

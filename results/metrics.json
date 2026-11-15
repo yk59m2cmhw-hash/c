@@ -24,6 +24,44 @@
     "linear": 29.0,
     "model": 29.0
   },
+  "alert_thresholds_retuned_in_this_environment": {
+    "persistence": 23.0,
+    "seasonal": 26.5,
+    "cams": 18.5,
+    "linear": 29.0,
+    "model": 29.0
+  },
+  "false_alarms_at_matched_misses_test": {
+    "persistence": {
+      "5": 122,
+      "8": 87,
+      "11": 76,
+      "16": 59,
+      "20": 50,
+      "30": 38
+    },
+    "cams": {
+      "5": 121,
+      "8": 86,
+      "11": 70,
+      "16": 47,
+      "20": 38,
+      "30": 33
+    },
+    "model": {
+      "5": 80,
+      "8": 70,
+      "11": 67,
+      "16": 50,
+      "20": 47,
+      "30": 27
+    }
+  },
+  "library_versions": {
+    "scikit-learn": "1.9.1",
+    "pandas": "3.0.5",
+    "numpy": "2.5.3"
+  },
   "model_params": {
     "loss": "absolute_error",
     "learning_rate": 0.05,

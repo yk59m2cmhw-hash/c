@@ -39,9 +39,8 @@ class Forecaster:
         pm = aa.load_pm(aa.RAW / "openaq_almaty_8876_pm25_hourly.csv")
         self.table = aa.build_table(pm, aa.load_metar(), aa.load_cams())
         parts = aa.split(self.table)
-        # alert threshold: chosen on validation with a model that saw only the training years
-        early = aa.fit_model(parts["train"])
-        self.threshold = aa.tune_threshold(parts["valid"]["y"], early.predict(parts["valid"][aa.FEATURES]))
+        # warning threshold: chosen on validation and fixed before the test period was scored
+        self.threshold = aa.ALERT_THRESHOLDS["model"]
         # final model: trained on train+validation, so every test-period evening is unseen
         fit_rows = pd.concat([parts["train"], parts["valid"]])
         self.model = aa.fit_model(fit_rows)

@@ -39,6 +39,19 @@
 | Linear model (ridge) | 86 / 119 | 33 | 21 |
 | **Our model (boosted trees)** | 90 / 119 | 29 | 34 |
 
+## Does the warning result depend on the threshold? (test; added after the test was scored, descriptive)
+
+Fewest false alarms each method can reach while missing at most N smog days, when its threshold is swept on the test days:
+
+| Missed at most | Tomorrow = today | Global model (CAMS) | Our model |
+|---|---|---|---|
+| 5 | 122 | 121 | 80 |
+| 8 | 87 | 86 | 70 |
+| 11 | 76 | 70 | 67 |
+| 16 | 59 | 47 | 50 |
+| 20 | 50 | 38 | 47 |
+| 30 | 38 | 33 | 27 |
+
 95% interval for the model's MAE gain over persistence on test: 1.7 .. 4.5 µg/m³ (bootstrap over weeks).
 
 Days when the air crossed the 35 µg/m³ line between today and tomorrow: 69 (35 smog arrives, 34 smog clears). Persistence is wrong on all of them by construction; the model's forecast was on the correct side on 36 (19 arrivals, 17 clearings).
