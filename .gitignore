@@ -1,0 +1,5 @@
+__pycache__/
+.ipynb_checkpoints/
+data/raw/openaq_8876/
+*.pyc
+scripts/data/

@@ -1,0 +1,262 @@
+{
+ "test_period": [
+  "2024-10-11",
+  "2025-11-13"
+ ],
+ "test_days": 396,
+ "test_days_oct_mar": 216,
+ "train_days_final_model": 886,
+ "mae": {
+  "Persistence (last 24 h at 18:00)": {
+   "MAE Oct-Mar": 17.0,
+   "MAE all days": 10.93
+  },
+  "Persistence (full calendar day, knows 6 h more)": {
+   "MAE Oct-Mar": 15.31,
+   "MAE all days": 9.91
+  },
+  "Typical value for the month": {
+   "MAE Oct-Mar": 18.52,
+   "MAE all days": 11.68
+  },
+  "Our model (Ridge, air history + weather)": {
+   "MAE Oct-Mar": 12.15,
+   "MAE all days": 8.21
+  }
+ },
+ "gain_vs_persistence_oct_mar": {
+  "mean": 4.85,
+  "ci95": [
+   3.0,
+   6.95
+  ]
+ },
+ "gain_vs_calendar_persistence_oct_mar": {
+  "mean": 3.15,
+  "ci95": [
+   1.36,
+   5.23
+  ]
+ },
+ "alerts_oct_mar": {
+  "Our model": {
+   "bad days": 88,
+   "caught": 72,
+   "missed": 16,
+   "false alarms": 22,
+   "correctly quiet": 106,
+   "recall": 0.82,
+   "precision": 0.77
+  },
+  "Persistence (last 24 h at 18:00)": {
+   "bad days": 88,
+   "caught": 69,
+   "missed": 19,
+   "false alarms": 40,
+   "correctly quiet": 88,
+   "recall": 0.78,
+   "precision": 0.63
+  },
+  "Persistence, simple rule (warn if last 24 h > 35.4)": {
+   "bad days": 88,
+   "caught": 57,
+   "missed": 31,
+   "false alarms": 28,
+   "correctly quiet": 100,
+   "recall": 0.65,
+   "precision": 0.67
+  }
+ },
+ "cutoffs": {
+  "model": 32.5,
+  "persistence": 29.5
+ },
+ "by_kind_of_day": {
+  "1. smog starts (clean -> bad)": {
+   "days": 31,
+   "model_warned": 17,
+   "persistence_warned": 12,
+   "model_error": 15.41,
+   "persistence_error": 25.12
+  },
+  "2. smog continues (bad -> bad)": {
+   "days": 57,
+   "model_warned": 55,
+   "persistence_warned": 57,
+   "model_error": 19.99,
+   "persistence_error": 21.23
+  },
+  "3. air clears (bad -> clean)": {
+   "days": 28,
+   "model_warned": 13,
+   "persistence_warned": 28,
+   "model_error": 13.11,
+   "persistence_error": 33.13
+  },
+  "4. stays clean (clean -> clean)": {
+   "days": 100,
+   "model_warned": 9,
+   "persistence_warned": 12,
+   "model_error": 6.41,
+   "persistence_error": 7.56
+  }
+ },
+ "range_coverage": {
+  "oct_mar": 0.759,
+  "all_days": 0.74
+ },
+ "likely_range_log": {
+  "heating": [
+   -0.6273956452962057,
+   0.3325744610693598
+  ],
+  "warm": [
+   -0.3878801729359562,
+   0.27264829717465333
+  ]
+ },
+ "real_forecast_check": {
+  "the weather record (as if the forecast were perfect)": {
+   "Oct-Mar days": 216,
+   "MAE Oct-Mar": 12.15,
+   "MAE all days": 8.21,
+   "missed": 16,
+   "false alarms": 22
+  },
+  "a real forecast, 1 day old": {
+   "Oct-Mar days": 216,
+   "MAE Oct-Mar": 12.15,
+   "MAE all days": 8.27,
+   "missed": 18,
+   "false alarms": 22
+  },
+  "a real forecast, 2 days old": {
+   "Oct-Mar days": 216,
+   "MAE Oct-Mar": 12.06,
+   "MAE all days": 8.2,
+   "missed": 16,
+   "false alarms": 21
+  },
+  "(baseline) persistence, needs no weather": {
+   "Oct-Mar days": 216,
+   "MAE Oct-Mar": 17.0,
+   "MAE all days": 10.93,
+   "missed": 19,
+   "false alarms": 40
+  }
+ },
+ "model_selection_past_winters": {
+  "Persistence (last 24 h at 18:00)": {
+   "MAE winter 2022/23": 24.16,
+   "MAE winter 2023/24": 18.12,
+   "average": 21.14,
+   "vs persistence": "+0%"
+  },
+  "Ridge | A: air history only": {
+   "MAE winter 2022/23": 20.94,
+   "MAE winter 2023/24": 14.78,
+   "average": 17.86,
+   "vs persistence": "-16%"
+  },
+  "Ridge | B: + city weather tomorrow": {
+   "MAE winter 2022/23": 14.72,
+   "MAE winter 2023/24": 12.66,
+   "average": 13.69,
+   "vs persistence": "-35%"
+  },
+  "Ridge | C: + inversion signal": {
+   "MAE winter 2022/23": 14.25,
+   "MAE winter 2023/24": 14.54,
+   "average": 14.4,
+   "vs persistence": "-32%"
+  },
+  "Boosting | B: + city weather tomorrow": {
+   "MAE winter 2022/23": 15.35,
+   "MAE winter 2023/24": 12.17,
+   "average": 13.76,
+   "vs persistence": "-35%"
+  },
+  "Boosting | C: + inversion signal": {
+   "MAE winter 2022/23": 14.93,
+   "MAE winter 2023/24": 12.71,
+   "average": 13.82,
+   "vs persistence": "-35%"
+  }
+ },
+ "timetable_validation": {
+  "1": {
+   "weeks": 22,
+   "fixed timetable": 35.17,
+   "rule + persistence": 37.6,
+   "rule + our forecast": 29.33,
+   "perfect hindsight": 17.17,
+   "avoidable dirt removed (persistence)": "-14%",
+   "avoidable dirt removed (our forecast)": "32%"
+  },
+  "2": {
+   "weeks": 22,
+   "fixed timetable": 35.17,
+   "rule + persistence": 33.69,
+   "rule + our forecast": 32.54,
+   "perfect hindsight": 22.11,
+   "avoidable dirt removed (persistence)": "11%",
+   "avoidable dirt removed (our forecast)": "20%"
+  },
+  "3": {
+   "weeks": 22,
+   "fixed timetable": 35.17,
+   "rule + persistence": 34.74,
+   "rule + our forecast": 33.34,
+   "perfect hindsight": 25.58,
+   "avoidable dirt removed (persistence)": "4%",
+   "avoidable dirt removed (our forecast)": "19%"
+  }
+ },
+ "timetable_test": {
+  "1": {
+   "weeks": 29,
+   "fixed timetable": 39.98,
+   "rule + persistence": 34.11,
+   "rule + our forecast": 32.57,
+   "perfect hindsight": 22.33,
+   "avoidable dirt removed (persistence)": "33%",
+   "avoidable dirt removed (our forecast)": "42%"
+  },
+  "2": {
+   "weeks": 29,
+   "fixed timetable": 39.98,
+   "rule + persistence": 37.5,
+   "rule + our forecast": 35.4,
+   "perfect hindsight": 26.71,
+   "avoidable dirt removed (persistence)": "19%",
+   "avoidable dirt removed (our forecast)": "35%"
+  },
+  "3": {
+   "weeks": 29,
+   "fixed timetable": 39.98,
+   "rule + persistence": 38.83,
+   "rule + our forecast": 37.7,
+   "perfect hindsight": 31.12,
+   "avoidable dirt removed (persistence)": "13%",
+   "avoidable dirt removed (our forecast)": "26%"
+  }
+ },
+ "timetable_test_quota2": {
+  "weeks": 29,
+  "cleaner_than_fixed": 4.58,
+  "ci95_vs_fixed": [
+   0.79,
+   8.82
+  ],
+  "cleaner_than_persistence_planner": 2.09,
+  "ci95_vs_persistence": [
+   -1.32,
+   5.86
+  ],
+  "weeks_better_tied_worse": [
+   17,
+   0,
+   12
+  ]
+ }
+}

@@ -1,0 +1,6 @@
+pandas
+numpy
+scikit-learn
+matplotlib
+requests
+gradio  # optional: only for the demo page (RUN_APP = True in the notebook)
